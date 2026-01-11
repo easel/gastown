@@ -66,17 +66,14 @@ func init() {
 func runRigDock(cmd *cobra.Command, args []string) error {
 	rigName := args[0]
 
-	// Get rig
-	_, r, err := getRig(rigName)
+	// Get rig and town root
+	townRoot, r, err := getRig(rigName)
 	if err != nil {
 		return err
 	}
 
-	// Get rig prefix for bead ID
-	prefix := "gt" // default
-	if r.Config != nil && r.Config.Prefix != "" {
-		prefix = r.Config.Prefix
-	}
+	// Get rig prefix from routes table (handles cross-rig prefixes correctly)
+	prefix := beads.GetPrefixForRig(townRoot, rigName)
 
 	// Find the rig identity bead
 	rigBeadID := beads.RigBeadIDWithPrefix(prefix, rigName)
@@ -167,16 +164,13 @@ func runRigUndock(cmd *cobra.Command, args []string) error {
 	rigName := args[0]
 
 	// Get rig and town root
-	_, r, err := getRig(rigName)
+	townRoot, r, err := getRig(rigName)
 	if err != nil {
 		return err
 	}
 
-	// Get rig prefix for bead ID
-	prefix := "gt" // default
-	if r.Config != nil && r.Config.Prefix != "" {
-		prefix = r.Config.Prefix
-	}
+	// Get rig prefix from routes table (handles cross-rig prefixes correctly)
+	prefix := beads.GetPrefixForRig(townRoot, rigName)
 
 	// Find the rig identity bead
 	rigBeadID := beads.RigBeadIDWithPrefix(prefix, rigName)
@@ -228,7 +222,11 @@ func runRigUndock(cmd *cobra.Command, args []string) error {
 
 // IsRigDocked checks if a rig is docked by checking for the status:docked label
 // on the rig identity bead. This function is exported for use by the daemon.
-func IsRigDocked(townRoot, rigName, prefix string) bool {
+// The prefix is resolved from the town's routes table to handle cross-rig prefixes correctly.
+func IsRigDocked(townRoot, rigName string) bool {
+	// Get rig prefix from routes table (handles cross-rig prefixes correctly)
+	prefix := beads.GetPrefixForRig(townRoot, rigName)
+
 	// Construct the rig beads path
 	rigPath := townRoot + "/" + rigName
 	beadsPath := rigPath + "/mayor/rig"
