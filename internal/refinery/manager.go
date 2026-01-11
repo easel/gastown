@@ -15,6 +15,7 @@ import (
 	"github.com/steveyegge/gastown/internal/config"
 	"github.com/steveyegge/gastown/internal/constants"
 	"github.com/steveyegge/gastown/internal/events"
+	"github.com/steveyegge/gastown/internal/git"
 	"github.com/steveyegge/gastown/internal/mail"
 	"github.com/steveyegge/gastown/internal/mrqueue"
 	"github.com/steveyegge/gastown/internal/rig"
@@ -26,9 +27,10 @@ import (
 
 // Common errors
 var (
-	ErrNotRunning     = errors.New("refinery not running")
-	ErrAlreadyRunning = errors.New("refinery already running")
-	ErrNoQueue        = errors.New("no items in queue")
+	ErrNotRunning         = errors.New("refinery not running")
+	ErrAlreadyRunning     = errors.New("refinery already running")
+	ErrNoQueue            = errors.New("no items in queue")
+	ErrNoRefineryWorktree = errors.New("refinery worktree missing and cannot be auto-created: no .repo.git found")
 )
 
 // Manager handles refinery lifecycle and queue operations.
@@ -61,6 +63,50 @@ func (m *Manager) stateFile() string {
 // SessionName returns the tmux session name for this refinery.
 func (m *Manager) SessionName() string {
 	return fmt.Sprintf("gt-%s-refinery", m.rig.Name)
+}
+
+// EnsureRefineryWorktree ensures the refinery/rig worktree exists.
+// If it doesn't exist, it will be auto-created from the bare repo (.repo.git).
+// This fixes the bug where refinery fell back to mayor/rig causing role/location mismatch.
+func (m *Manager) EnsureRefineryWorktree() (string, error) {
+	refineryRigPath := filepath.Join(m.rig.Path, "refinery", "rig")
+
+	// If refinery/rig exists, use it
+	if _, err := os.Stat(refineryRigPath); err == nil {
+		return refineryRigPath, nil
+	}
+
+	// refinery/rig doesn't exist - try to auto-create from bare repo
+	bareRepoPath := filepath.Join(m.rig.Path, ".repo.git")
+	if _, err := os.Stat(bareRepoPath); os.IsNotExist(err) {
+		// No bare repo - cannot auto-create
+		return "", ErrNoRefineryWorktree
+	}
+
+	// Create parent directory
+	refineryPath := filepath.Dir(refineryRigPath)
+	if err := os.MkdirAll(refineryPath, 0755); err != nil {
+		return "", fmt.Errorf("creating refinery dir: %w", err)
+	}
+
+	// Get default branch for the worktree
+	defaultBranch := m.rig.DefaultBranch()
+
+	// Create worktree from bare repo
+	bareGit := git.NewGitWithDir(bareRepoPath, "")
+	if err := bareGit.WorktreeAddExisting(refineryRigPath, defaultBranch); err != nil {
+		return "", fmt.Errorf("creating refinery worktree: %w", err)
+	}
+
+	_, _ = fmt.Fprintf(m.output, "✓ Auto-created missing refinery worktree at %s\n", refineryRigPath)
+
+	// Set up beads redirect for refinery (points to rig-level .beads)
+	townRoot := filepath.Dir(m.rig.Path)
+	if err := beads.SetupRedirect(townRoot, refineryRigPath); err != nil {
+		_, _ = fmt.Fprintf(m.output, "Warning: could not set up refinery beads redirect: %v\n", err)
+	}
+
+	return refineryRigPath, nil
 }
 
 // loadState loads refinery state from disk.
@@ -158,11 +204,10 @@ func (m *Manager) Start(foreground bool) error {
 	// The Claude agent handles MR processing using git commands and beads
 
 	// Working directory is the refinery worktree (shares .git with mayor/polecats)
-	refineryRigDir := filepath.Join(m.rig.Path, "refinery", "rig")
-	if _, err := os.Stat(refineryRigDir); os.IsNotExist(err) {
-		// Fall back to mayor/rig (legacy architecture) - ensures we use project git, not town git.
-		// Using rig.Path directly would find town's .git with rig-named remotes instead of "origin".
-		refineryRigDir = filepath.Join(m.rig.Path, "mayor", "rig")
+	// EnsureRefineryWorktree will auto-create it from .repo.git if missing
+	refineryRigDir, err := m.EnsureRefineryWorktree()
+	if err != nil {
+		return fmt.Errorf("ensuring refinery worktree: %w", err)
 	}
 
 	// Ensure runtime settings exist in refinery/ (not refinery/rig/) so we don't

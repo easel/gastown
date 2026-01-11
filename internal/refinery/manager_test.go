@@ -3,6 +3,7 @@ package refinery
 import (
 	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
@@ -169,4 +170,153 @@ func TestManager_RegisterMR(t *testing.T) {
 	if saved.Worker != "Cheedo" {
 		t.Errorf("saved MR worker = %s, want Cheedo", saved.Worker)
 	}
+}
+
+// TestManager_EnsureRefineryWorktree tests the worktree creation/validation logic.
+// This reproduces the bug where refinery started in mayor/rig instead of refinery/rig.
+func TestManager_EnsureRefineryWorktree(t *testing.T) {
+	t.Run("returns existing refinery/rig path", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		rigPath := filepath.Join(tmpDir, "testrig")
+
+		// Create the refinery/rig directory (simulating a properly set up rig)
+		refineryRigPath := filepath.Join(rigPath, "refinery", "rig")
+		if err := os.MkdirAll(refineryRigPath, 0755); err != nil {
+			t.Fatalf("mkdir refinery/rig: %v", err)
+		}
+
+		r := &rig.Rig{
+			Name: "testrig",
+			Path: rigPath,
+		}
+		mgr := NewManager(r)
+
+		workDir, err := mgr.EnsureRefineryWorktree()
+		if err != nil {
+			t.Fatalf("EnsureRefineryWorktree: %v", err)
+		}
+
+		if workDir != refineryRigPath {
+			t.Errorf("workDir = %s, want %s", workDir, refineryRigPath)
+		}
+	})
+
+	t.Run("creates missing refinery/rig worktree from bare repo", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		rigPath := filepath.Join(tmpDir, "testrig")
+
+		// Create the bare repo structure (as if rig was partially set up)
+		bareRepoPath := filepath.Join(rigPath, ".repo.git")
+		if err := os.MkdirAll(bareRepoPath, 0755); err != nil {
+			t.Fatalf("mkdir .repo.git: %v", err)
+		}
+
+		// Initialize bare repo using exec.Command
+		cmd := exec.Command("git", "init", "--bare")
+		cmd.Dir = bareRepoPath
+		if err := cmd.Run(); err != nil {
+			t.Fatalf("git init --bare: %v", err)
+		}
+
+		// Create an initial commit so we have something to checkout
+		// Use a temporary worktree to make the initial commit
+		initDir := filepath.Join(tmpDir, "init-worktree")
+		if err := os.MkdirAll(initDir, 0755); err != nil {
+			t.Fatalf("mkdir init-worktree: %v", err)
+		}
+
+		// Initialize fresh repo with explicit main branch and add remote
+		cmd = exec.Command("git", "init", "--initial-branch=main")
+		cmd.Dir = initDir
+		if err := cmd.Run(); err != nil {
+			t.Fatalf("git init: %v", err)
+		}
+
+		// Set up git config for commits
+		cmd = exec.Command("git", "config", "user.email", "test@test.com")
+		cmd.Dir = initDir
+		_ = cmd.Run()
+		cmd = exec.Command("git", "config", "user.name", "Test User")
+		cmd.Dir = initDir
+		_ = cmd.Run()
+
+		// Create a dummy file and commit
+		dummyFile := filepath.Join(initDir, "README.md")
+		if err := os.WriteFile(dummyFile, []byte("# Test"), 0644); err != nil {
+			t.Fatalf("write README.md: %v", err)
+		}
+		cmd = exec.Command("git", "add", "README.md")
+		cmd.Dir = initDir
+		if err := cmd.Run(); err != nil {
+			t.Fatalf("git add: %v", err)
+		}
+		cmd = exec.Command("git", "commit", "-m", "Initial commit")
+		cmd.Dir = initDir
+		if err := cmd.Run(); err != nil {
+			t.Fatalf("git commit: %v", err)
+		}
+
+		// Add remote and push
+		cmd = exec.Command("git", "remote", "add", "origin", bareRepoPath)
+		cmd.Dir = initDir
+		if err := cmd.Run(); err != nil {
+			t.Fatalf("git remote add: %v", err)
+		}
+
+		// Push to bare repo (we initialized with --initial-branch=main)
+		cmd = exec.Command("git", "push", "-u", "origin", "main")
+		cmd.Dir = initDir
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git push: %v\n%s", err, out)
+		}
+
+		// Create .runtime dir (needed for state)
+		if err := os.MkdirAll(filepath.Join(rigPath, ".runtime"), 0755); err != nil {
+			t.Fatalf("mkdir .runtime: %v", err)
+		}
+
+		// Do NOT create refinery/rig - this is the bug scenario
+		// Also do NOT create mayor/rig - we want to test auto-creation
+
+		r := &rig.Rig{
+			Name: "testrig",
+			Path: rigPath,
+		}
+		mgr := NewManager(r)
+
+		workDir, err := mgr.EnsureRefineryWorktree()
+		if err != nil {
+			t.Fatalf("EnsureRefineryWorktree: %v", err)
+		}
+
+		expectedPath := filepath.Join(rigPath, "refinery", "rig")
+		if workDir != expectedPath {
+			t.Errorf("workDir = %s, want %s", workDir, expectedPath)
+		}
+
+		// Verify the worktree was actually created
+		if _, err := os.Stat(workDir); os.IsNotExist(err) {
+			t.Errorf("refinery/rig was not created")
+		}
+	})
+
+	t.Run("errors when bare repo does not exist", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		rigPath := filepath.Join(tmpDir, "testrig")
+		if err := os.MkdirAll(rigPath, 0755); err != nil {
+			t.Fatalf("mkdir: %v", err)
+		}
+
+		// No .repo.git, no mayor/rig, no refinery/rig
+		r := &rig.Rig{
+			Name: "testrig",
+			Path: rigPath,
+		}
+		mgr := NewManager(r)
+
+		_, err := mgr.EnsureRefineryWorktree()
+		if err == nil {
+			t.Error("EnsureRefineryWorktree should error when no repo exists")
+		}
+	})
 }
