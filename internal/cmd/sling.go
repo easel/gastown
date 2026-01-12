@@ -56,6 +56,13 @@ func trimJSONForError(jsonOutput []byte) string {
 	return s
 }
 
+func rejectCrewTarget(target string) error {
+	if strings.Contains(strings.ToLower(target), "/crew/") {
+		return fmt.Errorf("cannot sling to crew targets (use a rig or polecat instead)")
+	}
+	return nil
+}
+
 var slingCmd = &cobra.Command{
 	Use:     "sling <bead-or-formula> [target]",
 	GroupID: GroupWork,
@@ -252,6 +259,9 @@ func runSling(cmd *cobra.Command, args []string) error {
 
 	if len(args) > 1 {
 		target := args[1]
+		if err := rejectCrewTarget(target); err != nil {
+			return err
+		}
 
 		// Resolve "." to current agent identity (like git's "." meaning current directory)
 		if target == "." {
@@ -345,6 +355,14 @@ func runSling(cmd *cobra.Command, args []string) error {
 		// Use self's working directory for bd commands
 		if selfWorkDir != "" {
 			hookWorkDir = selfWorkDir
+		}
+	}
+
+	// Mayor cannot sling to crew members - crew are human-managed
+	roleInfo, roleErr := GetRole()
+	if roleErr == nil && roleInfo.Role == RoleMayor {
+		if strings.Contains(targetAgent, "/crew/") {
+			return fmt.Errorf("mayor cannot sling work to crew members (crew are human-managed)")
 		}
 	}
 
@@ -884,6 +902,11 @@ func runSlingFormula(args []string) error {
 	if len(args) > 1 {
 		target = args[1]
 	}
+	if target != "" {
+		if err := rejectCrewTarget(target); err != nil {
+			return err
+		}
+	}
 
 	// Resolve target agent and pane
 	var targetAgent string
@@ -976,6 +999,14 @@ func runSlingFormula(args []string) error {
 			return err
 		}
 		_ = selfWorkDir // Formula sling doesn't need hookWorkDir
+	}
+
+	// Mayor cannot sling to crew members - crew are human-managed
+	roleInfo, roleErr := GetRole()
+	if roleErr == nil && roleInfo.Role == RoleMayor {
+		if strings.Contains(targetAgent, "/crew/") {
+			return fmt.Errorf("mayor cannot sling work to crew members (crew are human-managed)")
+		}
 	}
 
 	fmt.Printf("%s Slinging formula %s to %s...\n", style.Bold.Render("🎯"), formulaName, targetAgent)
