@@ -112,12 +112,12 @@ func (m *Manager) Start(foreground bool) error {
 
 	t := tmux.NewTmux()
 	sessionID := m.SessionName()
+	townRoot := filepath.Dir(m.rig.Path)
+	runtimeConfig := config.ResolveAgentConfig(townRoot, m.rig.Path)
 
 	if foreground {
 		// In foreground mode, check tmux session (no PID inference per ZFC)
-		townRoot := filepath.Dir(m.rig.Path)
-		agentCfg := config.ResolveAgentConfig(townRoot, m.rig.Path)
-		if running, _ := t.HasSession(sessionID); running && t.IsAgentRunning(sessionID, config.ExpectedPaneCommands(agentCfg)...) {
+		if running, _ := t.HasSession(sessionID); running && t.IsAgentRunning(sessionID, config.ExpectedPaneCommands(runtimeConfig)...) {
 			return ErrAlreadyRunning
 		}
 
@@ -139,9 +139,7 @@ func (m *Manager) Start(foreground bool) error {
 	running, _ := t.HasSession(sessionID)
 	if running {
 		// Session exists - check if Claude is actually running (healthy vs zombie)
-		townRoot := filepath.Dir(m.rig.Path)
-		agentCfg := config.ResolveAgentConfig(townRoot, m.rig.Path)
-		if t.IsAgentRunning(sessionID, config.ExpectedPaneCommands(agentCfg)...) {
+		if t.IsAgentRunning(sessionID, config.ExpectedPaneCommands(runtimeConfig)...) {
 			// Healthy - Claude is running
 			return ErrAlreadyRunning
 		}
@@ -165,16 +163,14 @@ func (m *Manager) Start(foreground bool) error {
 		refineryRigDir = filepath.Join(m.rig.Path, "mayor", "rig")
 	}
 
-	// Ensure runtime settings exist in refinery/ (not refinery/rig/) so we don't
-	// write into the source repo. Runtime walks up the tree to find settings.
-	refineryParentDir := filepath.Join(m.rig.Path, "refinery")
-	runtimeConfig := config.LoadRuntimeConfig(m.rig.Path)
+	// Ensure runtime settings exist alongside the worktree (not inside the repo).
+	// Runtime walks up the tree to find settings.
+	refineryParentDir := filepath.Dir(refineryRigDir)
 	if err := runtime.EnsureSettingsForRole(refineryParentDir, "refinery", runtimeConfig); err != nil {
 		return fmt.Errorf("ensuring runtime settings: %w", err)
 	}
 
 	// Resolve account for runtime config (use default account if configured)
-	townRoot := filepath.Dir(m.rig.Path)
 	accountsPath := constants.MayorAccountsPath(townRoot)
 	claudeConfigDir, accountHandle, err := config.ResolveAccountConfigDir(accountsPath, "")
 	if err != nil {
