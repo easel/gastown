@@ -89,6 +89,11 @@ for the Mayor to edit code. The Mayor role is:
 2. **Create a worktree**: `gt worktree <rig>` - for quick cross-rig fixes
 3. **Never edit in mayor/rig** - it has no dedicated owner, staged changes accumulate
 
+### Crew vs Polecats
+- **Polecats** are autonomous workers. Use `gt sling <bead> <rig>` to spawn them.
+- **Crew** are human-managed worktrees. Do not sling work to `rig/crew/<name>`.
+- If a human needs a manual workspace, use `gt worktree <rig>` and work there.
+
 ### Why This Matters
 - `mayor/rig/` may have staged changes from previous sessions
 - Multiple agents might work there, causing conflicts

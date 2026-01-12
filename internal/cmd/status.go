@@ -544,15 +544,15 @@ func outputStatusText(status TownStatus) error {
 		// Crew
 		if len(crews) > 0 {
 			if statusVerbose {
-				fmt.Printf("%s %s (%d)\n", roleIcons["crew"], style.Bold.Render("Crew"), len(crews))
+				fmt.Printf("%s %s (%d)\n", roleIcons["crew"], style.Bold.Render("Crew (worktrees)"), len(crews))
 				for _, agent := range crews {
 					renderAgentDetails(agent, "   ", r.Hooks, status.Location)
 				}
 				fmt.Println()
 			} else {
-				fmt.Printf("%s %s (%d)\n", roleIcons["crew"], style.Bold.Render("Crew"), len(crews))
+				fmt.Printf("%s %s (%d)\n", roleIcons["crew"], style.Bold.Render("Crew (worktrees)"), len(crews))
 				for _, agent := range crews {
-					renderAgentCompact(agent, "   ", r.Hooks, status.Location)
+					renderCrewCompact(agent, "   ", r.Hooks, status.Location)
 				}
 			}
 		}
@@ -811,6 +811,12 @@ func renderAgentCompact(agent AgentRuntime, indent string, hooks []AgentHookInfo
 
 	// Print single line: name + status + hook + mail
 	fmt.Printf("%s%-12s %s%s%s\n", indent, agent.Name, statusIndicator, hookSuffix, mailSuffix)
+}
+
+func renderCrewCompact(agent AgentRuntime, indent string, hooks []AgentHookInfo, _ string) {
+	agentDisplay := agent
+	agentDisplay.Name = "crew/" + agent.Name
+	renderAgentCompact(agentDisplay, indent, hooks, "")
 }
 
 // buildStatusIndicator creates the visual status indicator for an agent.
