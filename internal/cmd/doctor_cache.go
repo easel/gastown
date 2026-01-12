@@ -15,12 +15,12 @@ import (
 )
 
 var (
-	cacheClean    bool
-	cacheDryRun   bool
-	cacheMaxAge   int // days
-	cacheMaxSize  int // MB
-	cacheFull     bool
-	cacheForce    bool
+	cacheClean   bool
+	cacheDryRun  bool
+	cacheMaxAge  int // days
+	cacheMaxSize int // MB
+	cacheFull    bool
+	cacheForce   bool
 )
 
 var doctorCacheCmd = &cobra.Command{
@@ -66,13 +66,13 @@ type CacheEntry struct {
 
 // CacheStats holds aggregate cache statistics
 type CacheStats struct {
-	TotalSize   int64
-	TotalFiles  int
-	TotalDirs   int
-	ByDir       map[string]int64          // subdirectory -> size
-	ByAge       map[string]int64          // age bucket -> size
-	Largest     []CacheEntry              // largest entries
-	Stale       []CacheEntry              // entries older than threshold
+	TotalSize  int64
+	TotalFiles int
+	TotalDirs  int
+	ByDir      map[string]int64 // subdirectory -> size
+	ByAge      map[string]int64 // age bucket -> size
+	Largest    []CacheEntry     // largest entries
+	Stale      []CacheEntry     // entries older than threshold
 }
 
 func runDoctorCache(cmd *cobra.Command, args []string) error {
@@ -168,7 +168,7 @@ func collectCacheStats(cacheDir string, maxAgeDays int) *CacheStats {
 	}
 
 	// Age distribution (scan all files)
-	filepath.Walk(cacheDir, func(path string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(cacheDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
 			return nil
 		}
@@ -184,7 +184,9 @@ func collectCacheStats(cacheDir string, maxAgeDays int) *CacheStats {
 			ModTime: info.ModTime(),
 		})
 		return nil
-	})
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: cache scan incomplete: %v\n", err)
+	}
 
 	// Sort largest by size descending
 	sort.Slice(stats.Largest, func(i, j int) bool {
@@ -200,7 +202,7 @@ func collectCacheStats(cacheDir string, maxAgeDays int) *CacheStats {
 }
 
 func collectStaleEntries(dir string, cutoff time.Time, stats *CacheStats) {
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil
 		}
@@ -213,7 +215,9 @@ func collectStaleEntries(dir string, cutoff time.Time, stats *CacheStats) {
 			})
 		}
 		return nil
-	})
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: stale entry scan incomplete: %v\n", err)
+	}
 }
 
 func displayCacheStats(stats *CacheStats) {
@@ -300,8 +304,11 @@ func cleanFullCache(cacheDir string, dryRun bool) error {
 	// Create manifest before deletion
 	manifest := createManifest(cacheDir)
 	manifestPath := filepath.Join(os.TempDir(), fmt.Sprintf("claude-cache-manifest-%d.json", time.Now().Unix()))
-	if data, err := json.MarshalIndent(manifest, "", "  "); err == nil {
-		os.WriteFile(manifestPath, data, 0644)
+	if data, err := json.MarshalIndent(manifest, "", "  "); err != nil {
+		fmt.Printf("Warning: could not serialize manifest: %v\n", err)
+	} else if err := os.WriteFile(manifestPath, data, 0644); err != nil {
+		fmt.Printf("Warning: could not write manifest: %v\n", err)
+	} else {
 		fmt.Printf("Manifest saved to: %s\n", manifestPath)
 	}
 
@@ -392,14 +399,16 @@ func createManifest(cacheDir string) map[string]interface{} {
 	}
 
 	var entries []string
-	filepath.Walk(cacheDir, func(path string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(cacheDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil
 		}
 		rel, _ := filepath.Rel(cacheDir, path)
 		entries = append(entries, rel)
 		return nil
-	})
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: manifest scan incomplete: %v\n", err)
+	}
 	manifest["entries"] = entries
 	manifest["entry_count"] = len(entries)
 
@@ -426,7 +435,7 @@ func getActiveClaudeSessions() []string {
 
 func getDirSize(path string) int64 {
 	var size int64
-	filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil
 		}
@@ -434,7 +443,9 @@ func getDirSize(path string) int64 {
 			size += info.Size()
 		}
 		return nil
-	})
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: size scan incomplete for %s: %v\n", path, err)
+	}
 	return size
 }
 

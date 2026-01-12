@@ -297,6 +297,29 @@ Gas Town supports multiple AI coding runtimes. Per-rig runtime settings are in `
   after the session is ready: `gt prime`, optional `gt mail check --inject`
   for autonomous roles, and `gt nudge deacon session-started`.
 
+## Codex Agents
+
+Codex can run as the Mayor or as polecat workers. Configure Codex to read
+`CLAUDE.md` for role context:
+
+```toml
+# ~/.codex/config.toml
+project_doc_fallback_filenames = ["CLAUDE.md"]
+```
+
+Start a session or sling work with the Codex preset:
+
+```bash
+gt mayor attach --agent codex
+gt sling <issue> <rig> --agent codex
+```
+
+Optional: set Codex as the default agent for new sessions:
+
+```bash
+gt config default-agent codex
+```
+
 ## Key Commands
 
 ### Workspace Management

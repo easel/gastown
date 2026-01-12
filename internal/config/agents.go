@@ -128,9 +128,9 @@ var builtinPresets = map[AgentPreset]*AgentPresetInfo{
 	AgentCodex: {
 		Name:                AgentCodex,
 		Command:             "codex",
-		Args:                []string{"--yolo"},
+		Args:                []string{"--dangerously-bypass-approvals-and-sandbox"},
 		ProcessNames:        []string{"codex"}, // Codex CLI binary
-		SessionIDEnv:        "", // Codex captures from JSONL output
+		SessionIDEnv:        "",                // Codex captures from JSONL output
 		ResumeFlag:          "resume",
 		ResumeStyle:         "subcommand",
 		SupportsHooks:       false, // Use env/files instead
@@ -334,7 +334,7 @@ func RuntimeConfigFromPreset(preset AgentPreset) *RuntimeConfig {
 }
 
 // BuildResumeCommand builds a command to resume an agent session.
-// Returns the full command string including any YOLO/autonomous flags.
+// Returns the full command string including any autonomous/bypass flags.
 // If sessionID is empty or the agent doesn't support resume, returns empty string.
 func BuildResumeCommand(agentName, sessionID string) string {
 	if sessionID == "" {
@@ -352,7 +352,7 @@ func BuildResumeCommand(agentName, sessionID string) string {
 	// Add resume based on style
 	switch info.ResumeStyle {
 	case "subcommand":
-		// e.g., "codex resume <session_id> --yolo"
+		// e.g., "codex resume <session_id> --dangerously-bypass-approvals-and-sandbox"
 		return info.Command + " " + info.ResumeFlag + " " + sessionID + " " + strings.Join(args, " ")
 	case "flag":
 		fallthrough

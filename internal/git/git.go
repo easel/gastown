@@ -160,7 +160,11 @@ func (g *Git) CloneBare(url, dest string) error {
 		return g.wrapError(err, stdout.String(), stderr.String(), []string{"clone", "--bare", url})
 	}
 	// Configure refspec so worktrees can fetch and see origin/* refs
-	return configureRefspec(dest)
+	if err := configureRefspec(dest); err != nil {
+		return err
+	}
+	// Fetch to populate refs/remotes/origin/* (needed for local clones)
+	return fetchOrigin(dest)
 }
 
 // configureHooksPath sets core.hooksPath to use the repo's .githooks directory
@@ -197,6 +201,18 @@ func configureRefspec(repoPath string) error {
 	return nil
 }
 
+// fetchOrigin runs git fetch origin to populate refs/remotes/origin/*.
+// This is needed after bare clones from local paths, which don't auto-populate remote refs.
+func fetchOrigin(repoPath string) error {
+	cmd := exec.Command("git", "-C", repoPath, "fetch", "origin")
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("fetching origin: %s", strings.TrimSpace(stderr.String()))
+	}
+	return nil
+}
+
 // CloneBareWithReference clones a bare repository using a local repo as an object reference.
 func (g *Git) CloneBareWithReference(url, dest, reference string) error {
 	cmd := exec.Command("git", "clone", "--bare", "--reference-if-able", reference, url, dest)
@@ -207,7 +223,11 @@ func (g *Git) CloneBareWithReference(url, dest, reference string) error {
 		return g.wrapError(err, stdout.String(), stderr.String(), []string{"clone", "--bare", "--reference-if-able", url})
 	}
 	// Configure refspec so worktrees can fetch and see origin/* refs
-	return configureRefspec(dest)
+	if err := configureRefspec(dest); err != nil {
+		return err
+	}
+	// Fetch to populate refs/remotes/origin/* (needed for local clones)
+	return fetchOrigin(dest)
 }
 
 // Checkout checks out the given ref.

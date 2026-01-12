@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -107,7 +108,9 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 	if !updateForce {
 		fmt.Print("\nContinue with rebuild? [Y/n] ")
 		var response string
-		fmt.Scanln(&response)
+		if _, err := fmt.Scanln(&response); err != nil && err != io.EOF {
+			return fmt.Errorf("reading confirmation: %w", err)
+		}
 		response = strings.ToLower(strings.TrimSpace(response))
 		if response == "n" || response == "no" {
 			fmt.Println("Aborted.")
@@ -135,7 +138,9 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 
 	// Build binary to temporary location first
 	tmpBinary := filepath.Join(os.TempDir(), fmt.Sprintf("gt-build-%d", time.Now().Unix()))
-	defer os.Remove(tmpBinary)
+	defer func() {
+		_ = os.Remove(tmpBinary)
+	}()
 
 	fmt.Printf("  • Building binary...\n")
 	ldflags := fmt.Sprintf("-X github.com/steveyegge/gastown/internal/cmd.Version=%s -X github.com/steveyegge/gastown/internal/cmd.Commit=%s -X github.com/steveyegge/gastown/internal/cmd.BuildTime=%s",
@@ -265,7 +270,9 @@ func copyFile(src, dst string) error {
 
 	// Atomically rename (this works even if dst is a running executable)
 	if err := os.Rename(tmpDst, dst); err != nil {
-		os.Remove(tmpDst) // Clean up temp file
+		if rmErr := os.Remove(tmpDst); rmErr != nil && !os.IsNotExist(rmErr) {
+			fmt.Printf("Warning: could not remove temp file %s: %v\n", tmpDst, rmErr)
+		}
 		return fmt.Errorf("renaming temp file: %w", err)
 	}
 

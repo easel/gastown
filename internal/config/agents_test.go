@@ -171,16 +171,16 @@ func TestLoadAgentRegistry(t *testing.T) {
 	ResetRegistryForTesting()
 }
 
-func TestAgentPresetYOLOFlags(t *testing.T) {
+func TestAgentPresetAutonomousFlags(t *testing.T) {
 	t.Parallel()
-	// Verify YOLO flags are set correctly for each E2E tested agent
+	// Verify autonomous flags are set correctly for each E2E tested agent
 	tests := []struct {
 		preset  AgentPreset
 		wantArg string // At least this arg should be present
 	}{
 		{AgentClaude, "--dangerously-skip-permissions"},
 		{AgentGemini, "yolo"}, // Part of "--approval-mode yolo"
-		{AgentCodex, "--yolo"},
+		{AgentCodex, "--dangerously-bypass-approvals-and-sandbox"},
 	}
 
 	for _, tt := range tests {
@@ -267,7 +267,7 @@ func TestBuildResumeCommand(t *testing.T) {
 			agentName: "codex",
 			sessionID: "codex-sess-789",
 			wantEmpty: false,
-			contains:  []string{"codex", "resume", "codex-sess-789", "--yolo"},
+			contains:  []string{"codex", "resume", "codex-sess-789", "--dangerously-bypass-approvals-and-sandbox"},
 		},
 		{
 			name:      "empty session ID",
@@ -335,10 +335,10 @@ func TestGetSessionIDEnvVar(t *testing.T) {
 	}{
 		{"claude", "CLAUDE_SESSION_ID"},
 		{"gemini", "GEMINI_SESSION_ID"},
-		{"codex", ""},    // Codex uses JSONL output instead
-		{"cursor", ""},   // Cursor uses --resume with chatId directly
-		{"auggie", ""},   // Auggie uses --resume directly
-		{"amp", ""},      // AMP uses 'threads continue' subcommand
+		{"codex", ""},  // Codex uses JSONL output instead
+		{"cursor", ""}, // Cursor uses --resume with chatId directly
+		{"auggie", ""}, // Auggie uses --resume directly
+		{"amp", ""},    // AMP uses 'threads continue' subcommand
 		{"unknown", ""},
 	}
 
@@ -430,7 +430,7 @@ func TestAgentCommandGeneration(t *testing.T) {
 		{
 			preset:       AgentCodex,
 			wantCommand:  "codex",
-			wantContains: []string{"--yolo"},
+			wantContains: []string{"--dangerously-bypass-approvals-and-sandbox"},
 		},
 		{
 			preset:       AgentCursor,

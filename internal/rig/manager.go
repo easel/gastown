@@ -13,8 +13,8 @@ import (
 
 	"github.com/steveyegge/gastown/internal/beads"
 	"github.com/steveyegge/gastown/internal/claude"
-	"github.com/steveyegge/gastown/internal/constants"
 	"github.com/steveyegge/gastown/internal/config"
+	"github.com/steveyegge/gastown/internal/constants"
 	"github.com/steveyegge/gastown/internal/git"
 )
 
@@ -909,6 +909,7 @@ func (m *Manager) createRoleCLAUDEmd(workspacePath string, role string, rigName 
 		bootstrap = `# Mayor Context (` + rigName + `)
 
 > **Recovery**: Run ` + "`gt prime`" + ` after compaction, clear, or new session
+> **Codex**: Set ` + "`project_doc_fallback_filenames = [\"CLAUDE.md\"]`" + ` in ` + "`~/.codex/config.toml`" + `
 
 Full context is injected by ` + "`gt prime`" + ` at session start.
 `
@@ -916,6 +917,7 @@ Full context is injected by ` + "`gt prime`" + ` at session start.
 		bootstrap = `# Refinery Context (` + rigName + `)
 
 > **Recovery**: Run ` + "`gt prime`" + ` after compaction, clear, or new session
+> **Codex**: Set ` + "`project_doc_fallback_filenames = [\"CLAUDE.md\"]`" + ` in ` + "`~/.codex/config.toml`" + `
 
 Full context is injected by ` + "`gt prime`" + ` at session start.
 
@@ -932,6 +934,7 @@ Full context is injected by ` + "`gt prime`" + ` at session start.
 		bootstrap = `# Crew Context (` + rigName + `/` + name + `)
 
 > **Recovery**: Run ` + "`gt prime`" + ` after compaction, clear, or new session
+> **Codex**: Set ` + "`project_doc_fallback_filenames = [\"CLAUDE.md\"]`" + ` in ` + "`~/.codex/config.toml`" + `
 
 Full context is injected by ` + "`gt prime`" + ` at session start.
 
@@ -948,6 +951,7 @@ Full context is injected by ` + "`gt prime`" + ` at session start.
 		bootstrap = `# Polecat Context (` + rigName + `/` + name + `)
 
 > **Recovery**: Run ` + "`gt prime`" + ` after compaction, clear, or new session
+> **Codex**: Set ` + "`project_doc_fallback_filenames = [\"CLAUDE.md\"]`" + ` in ` + "`~/.codex/config.toml`" + `
 
 Full context is injected by ` + "`gt prime`" + ` at session start.
 
@@ -960,6 +964,7 @@ Full context is injected by ` + "`gt prime`" + ` at session start.
 		bootstrap = `# Agent Context
 
 > **Recovery**: Run ` + "`gt prime`" + ` after compaction, clear, or new session
+> **Codex**: Set ` + "`project_doc_fallback_filenames = [\"CLAUDE.md\"]`" + ` in ` + "`~/.codex/config.toml`" + `
 
 Full context is injected by ` + "`gt prime`" + ` at session start.
 `
