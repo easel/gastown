@@ -23,10 +23,22 @@ var slingCmd = &cobra.Command{
 
 This is THE command for assigning work in Gas Town. It handles:
   - Existing agents (mayor, crew, witness, refinery)
-  - Auto-spawning polecats when target is a rig
+  - Auto-spawning polecats when target is a rig (reuses idle ones first!)
   - Dispatching to dogs (Deacon's helper workers)
   - Formula instantiation and wisp creation
   - Auto-convoy creation for dashboard visibility
+
+Idle Polecat Reuse:
+  When slinging to a rig, sling prefers reusing idle polecats over spawning new
+  ones. This reduces process accumulation and provides faster startup since the
+  worktree already exists. A polecat is idle when:
+    - State is 'done' (no work in progress)
+    - Session is not running
+    - Hook is empty (no work attached)
+    - No unread mail
+
+  gt sling gt-abc gastown              # Reuses idle polecat if available
+  gt sling gt-abc gastown --fresh      # Force new polecat spawn
 
 Auto-Convoy:
   When slinging a single issue (not a formula), sling automatically creates
@@ -46,6 +58,7 @@ Target Resolution:
   gt sling gt-abc deacon/dogs/alpha     # Specific dog
 
 Spawning Options (when target is a rig):
+  gt sling gp-abc greenplace --fresh                # Force new polecat (skip idle reuse)
   gt sling gp-abc greenplace --create               # Create polecat if missing
   gt sling gp-abc greenplace --force                # Ignore unread mail
   gt sling gp-abc greenplace --account work         # Use specific Claude account
@@ -90,6 +103,7 @@ var (
 	slingArgs     string   // --args flag: natural language instructions for executor
 
 	// Flags migrated for polecat spawning (used by sling for work assignment)
+	slingFresh    bool   // --fresh: force new polecat spawn (skip idle reuse)
 	slingCreate   bool   // --create: create polecat if it doesn't exist
 	slingForce    bool   // --force: force spawn even if polecat has unread mail
 	slingAccount  string // --account: Claude Code account handle to use
@@ -106,6 +120,7 @@ func init() {
 	slingCmd.Flags().StringVarP(&slingArgs, "args", "a", "", "Natural language instructions for the executor (e.g., 'patch release')")
 
 	// Flags for polecat spawning (when target is a rig)
+	slingCmd.Flags().BoolVar(&slingFresh, "fresh", false, "Force new polecat spawn (skip idle reuse)")
 	slingCmd.Flags().BoolVar(&slingCreate, "create", false, "Create polecat if it doesn't exist")
 	slingCmd.Flags().BoolVar(&slingForce, "force", false, "Force spawn even if polecat has unread mail")
 	slingCmd.Flags().StringVar(&slingAccount, "account", "", "Claude Code account handle to use")
@@ -225,13 +240,22 @@ func runSling(cmd *cobra.Command, args []string) error {
 			// Check if target is a rig name (auto-spawn polecat)
 			if slingDryRun {
 				// Dry run - just indicate what would happen
-				fmt.Printf("Would spawn fresh polecat in rig '%s'\n", rigName)
+				if slingFresh {
+					fmt.Printf("Would spawn fresh polecat in rig '%s' (--fresh)\n", rigName)
+				} else {
+					fmt.Printf("Would reuse idle polecat or spawn new in rig '%s'\n", rigName)
+				}
 				targetAgent = fmt.Sprintf("%s/polecats/<new>", rigName)
 				targetPane = "<new-pane>"
 			} else {
-				// Spawn a fresh polecat in the rig
-				fmt.Printf("Target is rig '%s', spawning fresh polecat...\n", rigName)
+				// Spawn a polecat in the rig (reuses idle polecat unless --fresh)
+				if slingFresh {
+					fmt.Printf("Target is rig '%s', spawning fresh polecat (--fresh)...\n", rigName)
+				} else {
+					fmt.Printf("Target is rig '%s', looking for idle polecat or spawning new...\n", rigName)
+				}
 				spawnOpts := SlingSpawnOptions{
+					Fresh:    slingFresh,
 					Force:    slingForce,
 					Account:  slingAccount,
 					Create:   slingCreate,

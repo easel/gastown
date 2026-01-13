@@ -33,6 +33,7 @@ func (s *SpawnedPolecatInfo) AgentID() string {
 
 // SlingSpawnOptions contains options for spawning a polecat via sling.
 type SlingSpawnOptions struct {
+	Fresh    bool   // Force new polecat spawn (skip idle reuse)
 	Force    bool   // Force spawn even if polecat has uncommitted work
 	Account  string // Claude Code account handle to use
 	Create   bool   // Create polecat if it doesn't exist (currently always true for sling)
@@ -69,50 +70,75 @@ func SpawnPolecatForSling(rigName string, opts SlingSpawnOptions) (*SpawnedPolec
 	t := tmux.NewTmux()
 	polecatMgr := polecat.NewManager(r, polecatGit, t)
 
-	// Allocate a new polecat name
-	polecatName, err := polecatMgr.AllocateName()
-	if err != nil {
-		return nil, fmt.Errorf("allocating polecat name: %w", err)
-	}
-	fmt.Printf("Allocated polecat: %s\n", polecatName)
-
-	// Check if polecat already exists (shouldn't happen - indicates stale state needing repair)
-	existingPolecat, err := polecatMgr.Get(polecatName)
-
 	// Build add options with hook_bead set atomically at spawn time
 	addOpts := polecat.AddOptions{
 		HookBead: opts.HookBead,
 	}
 
-	if err == nil {
-		// Stale state: polecat exists despite fresh name allocation - repair it
-		// Check for uncommitted work first
-		if !opts.Force {
-			pGit := git.NewGit(existingPolecat.ClonePath)
-			workStatus, checkErr := pGit.CheckUncommittedWork()
-			if checkErr == nil && !workStatus.Clean() {
-				return nil, fmt.Errorf("polecat '%s' has uncommitted work: %s\nUse --force to proceed anyway",
-					polecatName, workStatus.String())
+	var polecatName string
+	var polecatObj *polecat.Polecat
+
+	// Try to reuse an idle polecat first (unless --fresh is specified)
+	if !opts.Fresh {
+		idlePolecat, idleInfo, findErr := polecatMgr.FindIdlePolecat()
+		if findErr != nil {
+			// Non-fatal: fall through to spawn new
+			fmt.Printf("Warning: could not check for idle polecats: %v\n", findErr)
+		} else if idlePolecat != nil {
+			fmt.Printf("Found idle polecat %s (%s), refreshing for reuse...\n", idlePolecat.Name, idleInfo.Reason)
+			refreshed, refreshErr := polecatMgr.RefreshForReuse(idlePolecat.Name, addOpts)
+			if refreshErr != nil {
+				fmt.Printf("Warning: could not refresh idle polecat: %v (spawning new)\n", refreshErr)
+			} else {
+				polecatName = refreshed.Name
+				polecatObj = refreshed
+				fmt.Printf("Reusing polecat %s (refreshed worktree)\n", polecatName)
 			}
 		}
-		fmt.Printf("Repairing stale polecat %s with fresh worktree...\n", polecatName)
-		if _, err = polecatMgr.RepairWorktreeWithOptions(polecatName, opts.Force, addOpts); err != nil {
-			return nil, fmt.Errorf("repairing stale polecat: %w", err)
-		}
-	} else if err == polecat.ErrPolecatNotFound {
-		// Create new polecat
-		fmt.Printf("Creating polecat %s...\n", polecatName)
-		if _, err = polecatMgr.AddWithOptions(polecatName, addOpts); err != nil {
-			return nil, fmt.Errorf("creating polecat: %w", err)
-		}
-	} else {
-		return nil, fmt.Errorf("getting polecat: %w", err)
 	}
 
-	// Get polecat object for path info
-	polecatObj, err := polecatMgr.Get(polecatName)
-	if err != nil {
-		return nil, fmt.Errorf("getting polecat after creation: %w", err)
+	// If no idle polecat was reused, allocate and create a new one
+	if polecatName == "" {
+		// Allocate a new polecat name
+		polecatName, err = polecatMgr.AllocateName()
+		if err != nil {
+			return nil, fmt.Errorf("allocating polecat name: %w", err)
+		}
+		fmt.Printf("Allocated polecat: %s\n", polecatName)
+
+		// Check if polecat already exists (shouldn't happen - indicates stale state needing repair)
+		existingPolecat, err := polecatMgr.Get(polecatName)
+
+		if err == nil {
+			// Stale state: polecat exists despite fresh name allocation - repair it
+			// Check for uncommitted work first
+			if !opts.Force {
+				pGit := git.NewGit(existingPolecat.ClonePath)
+				workStatus, checkErr := pGit.CheckUncommittedWork()
+				if checkErr == nil && !workStatus.Clean() {
+					return nil, fmt.Errorf("polecat '%s' has uncommitted work: %s\nUse --force to proceed anyway",
+						polecatName, workStatus.String())
+				}
+			}
+			fmt.Printf("Repairing stale polecat %s with fresh worktree...\n", polecatName)
+			if _, err = polecatMgr.RepairWorktreeWithOptions(polecatName, opts.Force, addOpts); err != nil {
+				return nil, fmt.Errorf("repairing stale polecat: %w", err)
+			}
+		} else if err == polecat.ErrPolecatNotFound {
+			// Create new polecat
+			fmt.Printf("Creating polecat %s...\n", polecatName)
+			if _, err = polecatMgr.AddWithOptions(polecatName, addOpts); err != nil {
+				return nil, fmt.Errorf("creating polecat: %w", err)
+			}
+		} else {
+			return nil, fmt.Errorf("getting polecat: %w", err)
+		}
+
+		// Get polecat object for path info
+		polecatObj, err = polecatMgr.Get(polecatName)
+		if err != nil {
+			return nil, fmt.Errorf("getting polecat after creation: %w", err)
+		}
 	}
 
 	// Resolve account for runtime config
