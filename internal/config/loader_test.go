@@ -1142,6 +1142,16 @@ func TestBuildAgentStartupCommandWithAgentOverride(t *testing.T) {
 			t.Fatalf("expected CLAUDE_CONFIG_DIR export in command: %q", cmd)
 		}
 	})
+
+	t.Run("excludes CLAUDE_CONFIG_DIR when empty", func(t *testing.T) {
+		cmd, err := BuildAgentStartupCommandWithAgentOverride("mayor", "mayor", "", "", "", "")
+		if err != nil {
+			t.Fatalf("BuildAgentStartupCommandWithAgentOverride: %v", err)
+		}
+		if strings.Contains(cmd, "CLAUDE_CONFIG_DIR") {
+			t.Fatalf("expected no CLAUDE_CONFIG_DIR when empty: %q", cmd)
+		}
+	})
 }
 
 func TestBuildCrewStartupCommandWithAgentOverride(t *testing.T) {

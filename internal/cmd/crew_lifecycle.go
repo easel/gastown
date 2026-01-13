@@ -309,7 +309,10 @@ func runCrewStart(cmd *cobra.Command, args []string) error {
 		townRoot = filepath.Dir(r.Path)
 	}
 	accountsPath := constants.MayorAccountsPath(townRoot)
-	claudeConfigDir, _, _ := config.ResolveAccountConfigDir(accountsPath, crewAccount)
+	claudeConfigDir, _, err := config.ResolveAccountConfigDir(accountsPath, crewAccount)
+	if err != nil {
+		fmt.Printf("Warning: could not resolve account config: %v\n", err)
+	}
 
 	// Build start options (shared across all crew members)
 	opts := crew.StartOptions{
