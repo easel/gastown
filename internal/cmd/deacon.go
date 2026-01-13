@@ -351,9 +351,13 @@ func startDeaconSession(t *tmux.Tmux, sessionName, agentOverride string) error {
 		style.PrintWarning("Could not create deacon settings: %v", err)
 	}
 
+	// Resolve account config dir for CLAUDE_CONFIG_DIR
+	accountsPath := constants.MayorAccountsPath(townRoot)
+	claudeConfigDir, _, _ := config.ResolveAccountConfigDir(accountsPath, "")
+
 	// Build startup command first
 	// Export GT_ROLE and BD_ACTOR in the command since tmux SetEnvironment only affects new panes
-	startupCmd, err := config.BuildAgentStartupCommandWithAgentOverride("deacon", "deacon", "", "", agentOverride)
+	startupCmd, err := config.BuildAgentStartupCommandWithAgentOverride("deacon", "deacon", "", "", agentOverride, claudeConfigDir)
 	if err != nil {
 		return fmt.Errorf("building startup command: %w", err)
 	}
@@ -368,9 +372,10 @@ func startDeaconSession(t *tmux.Tmux, sessionName, agentOverride string) error {
 	// Set environment (non-fatal: session works without these)
 	// Use centralized AgentEnv for consistency across all role startup paths
 	envVars := config.AgentEnv(config.AgentEnvConfig{
-		Role:     "deacon",
-		TownRoot: townRoot,
-		BeadsDir: beads.ResolveBeadsDir(townRoot),
+		Role:             "deacon",
+		TownRoot:         townRoot,
+		BeadsDir:         beads.ResolveBeadsDir(townRoot),
+		RuntimeConfigDir: claudeConfigDir,
 	})
 	for k, v := range envVars {
 		_ = t.SetEnvironment(sessionName, k, v)

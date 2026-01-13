@@ -79,6 +79,10 @@ func (m *Manager) Start(agentOverride string) error {
 		return fmt.Errorf("ensuring Claude settings: %w", err)
 	}
 
+	// Resolve account config dir for CLAUDE_CONFIG_DIR
+	accountsPath := constants.MayorAccountsPath(m.townRoot)
+	claudeConfigDir, _, _ := config.ResolveAccountConfigDir(accountsPath, "")
+
 	// Build startup beacon with explicit instructions (matches gt handoff behavior)
 	// This ensures the agent has clear context immediately, not after nudges arrive
 	beacon := session.FormatStartupNudge(session.StartupNudgeConfig{
@@ -89,7 +93,7 @@ func (m *Manager) Start(agentOverride string) error {
 
 	// Build startup command WITH the beacon prompt - the startup hook handles 'gt prime' automatically
 	// Export GT_ROLE and BD_ACTOR in the command since tmux SetEnvironment only affects new panes
-	startupCmd, err := config.BuildAgentStartupCommandWithAgentOverride("mayor", "mayor", "", beacon, agentOverride)
+	startupCmd, err := config.BuildAgentStartupCommandWithAgentOverride("mayor", "mayor", "", beacon, agentOverride, claudeConfigDir)
 	if err != nil {
 		return fmt.Errorf("building startup command: %w", err)
 	}
@@ -104,9 +108,10 @@ func (m *Manager) Start(agentOverride string) error {
 	// Set environment variables (non-fatal: session works without these)
 	// Use centralized AgentEnv for consistency across all role startup paths
 	envVars := config.AgentEnv(config.AgentEnvConfig{
-		Role:     "mayor",
-		TownRoot: m.townRoot,
-		BeadsDir: beads.ResolveBeadsDir(m.townRoot),
+		Role:             "mayor",
+		TownRoot:         m.townRoot,
+		BeadsDir:         beads.ResolveBeadsDir(m.townRoot),
+		RuntimeConfigDir: claudeConfigDir,
 	})
 	for k, v := range envVars {
 		_ = t.SetEnvironment(sessionID, k, v)

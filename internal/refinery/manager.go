@@ -173,12 +173,17 @@ func (m *Manager) Start(foreground bool, agentOverride string) error {
 		return fmt.Errorf("ensuring runtime settings: %w", err)
 	}
 
+	// Resolve account config dir for CLAUDE_CONFIG_DIR
+	townRoot := filepath.Dir(m.rig.Path)
+	accountsPath := constants.MayorAccountsPath(townRoot)
+	claudeConfigDir, _, _ := config.ResolveAccountConfigDir(accountsPath, "")
+
 	// Build startup command first
 	bdActor := fmt.Sprintf("%s/refinery", m.rig.Name)
 	var command string
 	if agentOverride != "" {
 		var err error
-		command, err = config.BuildAgentStartupCommandWithAgentOverride("refinery", bdActor, m.rig.Path, "", agentOverride)
+		command, err = config.BuildAgentStartupCommandWithAgentOverride("refinery", bdActor, m.rig.Path, "", agentOverride, claudeConfigDir)
 		if err != nil {
 			return fmt.Errorf("building startup command with agent override: %w", err)
 		}
@@ -194,13 +199,13 @@ func (m *Manager) Start(foreground bool, agentOverride string) error {
 
 	// Set environment variables (non-fatal: session works without these)
 	// Use centralized AgentEnv for consistency across all role startup paths
-	townRoot := filepath.Dir(m.rig.Path)
 	envVars := config.AgentEnv(config.AgentEnvConfig{
-		Role:          "refinery",
-		Rig:           m.rig.Name,
-		TownRoot:      townRoot,
-		BeadsDir:      beads.ResolveBeadsDir(m.rig.Path),
-		BeadsNoDaemon: true,
+		Role:             "refinery",
+		Rig:              m.rig.Name,
+		TownRoot:         townRoot,
+		BeadsDir:         beads.ResolveBeadsDir(m.rig.Path),
+		BeadsNoDaemon:    true,
+		RuntimeConfigDir: claudeConfigDir,
 	})
 
 	// Add refinery-specific flag

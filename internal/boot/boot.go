@@ -13,6 +13,7 @@ import (
 
 	"github.com/steveyegge/gastown/internal/beads"
 	"github.com/steveyegge/gastown/internal/config"
+	"github.com/steveyegge/gastown/internal/constants"
 	"github.com/steveyegge/gastown/internal/tmux"
 )
 
@@ -171,12 +172,16 @@ func (b *Boot) spawnTmux(agentOverride string) error {
 		return fmt.Errorf("ensuring boot dir: %w", err)
 	}
 
+	// Resolve account config dir for CLAUDE_CONFIG_DIR
+	accountsPath := constants.MayorAccountsPath(b.townRoot)
+	claudeConfigDir, _, _ := config.ResolveAccountConfigDir(accountsPath, "")
+
 	// Build startup command with optional agent override
 	// The "gt boot triage" prompt tells Boot to immediately start triage (GUPP principle)
 	var startCmd string
 	if agentOverride != "" {
 		var err error
-		startCmd, err = config.BuildAgentStartupCommandWithAgentOverride("boot", "deacon-boot", "", "gt boot triage", agentOverride)
+		startCmd, err = config.BuildAgentStartupCommandWithAgentOverride("boot", "deacon-boot", "", "gt boot triage", agentOverride, claudeConfigDir)
 		if err != nil {
 			return fmt.Errorf("building startup command with agent override: %w", err)
 		}
@@ -192,9 +197,10 @@ func (b *Boot) spawnTmux(agentOverride string) error {
 
 	// Set environment using centralized AgentEnv for consistency
 	envVars := config.AgentEnv(config.AgentEnvConfig{
-		Role:     "boot",
-		TownRoot: b.townRoot,
-		BeadsDir: beads.ResolveBeadsDir(b.townRoot),
+		Role:             "boot",
+		TownRoot:         b.townRoot,
+		BeadsDir:         beads.ResolveBeadsDir(b.townRoot),
+		RuntimeConfigDir: claudeConfigDir,
 	})
 	for k, v := range envVars {
 		_ = b.tmux.SetEnvironment(SessionName, k, v)
