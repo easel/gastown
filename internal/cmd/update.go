@@ -172,8 +172,9 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 	if runtime.GOOS == "darwin" {
 		fmt.Printf("  • Codesigning for macOS...\n")
 		signCmd := exec.Command("codesign", "-s", "-", "-f", installPath)
-		// Ignore errors - codesigning is optional
-		_ = signCmd.Run()
+		if err := signCmd.Run(); err != nil {
+			fmt.Printf("  Warning: codesigning failed: %v\n", err)
+		}
 	}
 
 	fmt.Printf("\n%s gt updated successfully!\n", style.Success.Render("✓"))
