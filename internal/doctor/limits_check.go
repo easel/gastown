@@ -484,7 +484,7 @@ func countGtProcessFDs() map[string]int {
 		return result
 	}
 
-	gtPatterns := regexp.MustCompile(`(?i)(gt|gastown|claude|node|deacon|daemon)`)
+	gtPatterns := regexp.MustCompile(`(?i)(\bgt\b|gastown|claude|node|deacon|daemon)`)
 
 	for _, entry := range entries {
 		pid, err := strconv.Atoi(entry)

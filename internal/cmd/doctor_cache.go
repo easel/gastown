@@ -152,7 +152,7 @@ func collectCacheStats(cacheDir string, maxAgeDays int) *CacheStats {
 			if err != nil {
 				continue
 			}
-			stats.TotalFiles++
+			// Note: TotalFiles is counted in filepath.Walk below, not here
 			stats.TotalSize += info.Size()
 
 			// Check if stale
