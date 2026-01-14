@@ -36,6 +36,11 @@ Auto-Convoy:
   gt sling gt-abc gastown              # Creates "Work: <issue-title>" convoy
   gt sling gt-abc gastown --no-convoy  # Skip auto-convoy creation
 
+Stale Polecat Cleanup:
+  Before spawning a new polecat for a rig, sling may clean up stale polecats
+  that are safe to nuke (no session, clean git state, no open MR). This keeps
+  the transient model intact and prevents accumulation without reusing them.
+
 Target Resolution:
   gt sling gt-abc                       # Self (current agent)
   gt sling gt-abc crew                  # Crew worker in current rig
@@ -380,8 +385,9 @@ func runSling(cmd *cobra.Command, args []string) error {
 		formulaWorkDir := beads.ResolveHookDir(townRoot, beadID, hookWorkDir)
 
 		// Step 1: Cook the formula (ensures proto exists)
-		// Cook doesn't need database context - runs from cwd like gt formula show
+		// Run from rig directory so any formula scaffolding uses the correct beads context.
 		cookCmd := exec.Command("bd", "--no-daemon", "cook", formulaName)
+		cookCmd.Dir = formulaWorkDir
 		cookCmd.Stderr = os.Stderr
 		if err := cookCmd.Run(); err != nil {
 			return fmt.Errorf("cooking formula %s: %w", formulaName, err)
