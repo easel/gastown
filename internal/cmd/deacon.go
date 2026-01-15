@@ -17,6 +17,7 @@ import (
 	"github.com/steveyegge/gastown/internal/config"
 	"github.com/steveyegge/gastown/internal/constants"
 	"github.com/steveyegge/gastown/internal/deacon"
+	"github.com/steveyegge/gastown/internal/mail"
 	"github.com/steveyegge/gastown/internal/polecat"
 	"github.com/steveyegge/gastown/internal/runtime"
 	"github.com/steveyegge/gastown/internal/session"
@@ -28,6 +29,22 @@ import (
 // getDeaconSessionName returns the Deacon session name.
 func getDeaconSessionName() string {
 	return session.DeaconSessionName()
+}
+
+func notifyMayorDeaconStartup(townRoot, subject, body string) {
+	router := mail.NewRouter(townRoot)
+	msg := &mail.Message{
+		From:     "deacon/",
+		To:       "mayor/",
+		Subject:  subject,
+		Body:     body,
+		Type:     mail.TypeNotification,
+		Priority: mail.PriorityHigh,
+	}
+
+	if err := router.Send(msg); err != nil {
+		style.PrintWarning("failed to notify mayor: %v", err)
+	}
 }
 
 var deaconCmd = &cobra.Command{
@@ -349,7 +366,12 @@ func startDeaconSession(t *tmux.Tmux, sessionName, agentOverride string) error {
 
 	// Ensure Claude settings exist (autonomous role needs mail in SessionStart)
 	if err := claude.EnsureSettingsForRole(deaconDir, "deacon"); err != nil {
-		return fmt.Errorf("creating deacon settings: %w", err)
+		style.PrintWarning("could not create deacon settings: %v", err)
+		notifyMayorDeaconStartup(
+			townRoot,
+			"Deacon startup warning: settings",
+			fmt.Sprintf("Failed to create deacon settings at %s.\nError: %v", deaconDir, err),
+		)
 	}
 
 	// Build startup command first
@@ -384,7 +406,12 @@ func startDeaconSession(t *tmux.Tmux, sessionName, agentOverride string) error {
 
 	// Wait for Claude to start
 	if err := t.WaitForCommand(sessionName, constants.SupportedShells, constants.ClaudeStartTimeout); err != nil {
-		return fmt.Errorf("waiting for deacon to start: %w", err)
+		style.PrintWarning("deacon runtime did not start cleanly: %v", err)
+		notifyMayorDeaconStartup(
+			townRoot,
+			"Deacon startup warning: runtime start",
+			fmt.Sprintf("Timed out waiting for deacon runtime in session %s.\nError: %v", sessionName, err),
+		)
 	}
 	time.Sleep(constants.ShutdownNotifyDelay)
 
@@ -398,6 +425,11 @@ func startDeaconSession(t *tmux.Tmux, sessionName, agentOverride string) error {
 		Topic:     "patrol",
 	}); err != nil {
 		style.PrintWarning("failed to send startup nudge: %v", err)
+		notifyMayorDeaconStartup(
+			townRoot,
+			"Deacon startup warning: startup nudge",
+			fmt.Sprintf("Failed to send startup nudge in session %s.\nError: %v", sessionName, err),
+		)
 	}
 
 	// GUPP: Gas Town Universal Propulsion Principle
@@ -405,7 +437,12 @@ func startDeaconSession(t *tmux.Tmux, sessionName, agentOverride string) error {
 	// Wait for beacon to be fully processed (needs to be separate prompt)
 	time.Sleep(2 * time.Second)
 	if err := t.NudgeSession(sessionName, session.PropulsionNudgeForRole("deacon", deaconDir)); err != nil {
-		return fmt.Errorf("sending propulsion nudge: %w", err)
+		style.PrintWarning("failed to send propulsion nudge: %v", err)
+		notifyMayorDeaconStartup(
+			townRoot,
+			"Deacon startup warning: propulsion nudge",
+			fmt.Sprintf("Failed to send propulsion nudge in session %s.\nError: %v", sessionName, err),
+		)
 	}
 
 	return nil
