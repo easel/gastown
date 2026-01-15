@@ -1212,7 +1212,6 @@ func TestBuildStartupCommand_UsesRigAgentWhenRigPathProvided(t *testing.T) {
 }
 
 func TestBuildStartupCommand_UsesRoleAgentsFromTownSettings(t *testing.T) {
-	t.Parallel()
 	townRoot := t.TempDir()
 	rigPath := filepath.Join(townRoot, "testrig")
 
