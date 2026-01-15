@@ -630,11 +630,12 @@ func (e *Engineer) HandleMRInfoFailure(mr *MRInfo, result ProcessResult) {
 // Returns the created task's ID for blocking the MR until resolution.
 //
 // Task format:
-//   Title: Resolve merge conflicts: <original-issue-title>
-//   Type: task
-//   Priority: inherit from original + boost (P2 -> P1)
-//   Parent: original MR bead
-//   Description: metadata including branch, conflict SHA, etc.
+//
+//	Title: Resolve merge conflicts: <original-issue-title>
+//	Type: task
+//	Priority: inherit from original + boost (P2 -> P1)
+//	Parent: original MR bead
+//	Description: metadata including branch, conflict SHA, etc.
 //
 // Merge Slot Integration:
 // Before creating a conflict resolution task, we acquire the merge-slot for this rig.
