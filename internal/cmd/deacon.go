@@ -364,6 +364,8 @@ func startDeaconSession(t *tmux.Tmux, sessionName, agentOverride string) error {
 		return fmt.Errorf("creating deacon directory: %w", err)
 	}
 
+	var fatalErr error
+
 	// Ensure Claude settings exist (autonomous role needs mail in SessionStart)
 	if err := claude.EnsureSettingsForRole(deaconDir, "deacon"); err != nil {
 		style.PrintWarning("could not create deacon settings: %v", err)
@@ -406,12 +408,14 @@ func startDeaconSession(t *tmux.Tmux, sessionName, agentOverride string) error {
 
 	// Wait for Claude to start
 	if err := t.WaitForCommand(sessionName, constants.SupportedShells, constants.ClaudeStartTimeout); err != nil {
+		fatalErr = fmt.Errorf("waiting for deacon to start: %w", err)
 		style.PrintWarning("deacon runtime did not start cleanly: %v", err)
 		notifyMayorDeaconStartup(
 			townRoot,
-			"Deacon startup warning: runtime start",
-			fmt.Sprintf("Timed out waiting for deacon runtime in session %s.\nError: %v", sessionName, err),
+			"Deacon startup failed: runtime start",
+			fmt.Sprintf("Timed out waiting for deacon runtime in session %s.\nError: %v\nAction: shutting down session.", sessionName, err),
 		)
+		goto Cleanup
 	}
 	time.Sleep(constants.ShutdownNotifyDelay)
 
@@ -437,15 +441,26 @@ func startDeaconSession(t *tmux.Tmux, sessionName, agentOverride string) error {
 	// Wait for beacon to be fully processed (needs to be separate prompt)
 	time.Sleep(2 * time.Second)
 	if err := t.NudgeSession(sessionName, session.PropulsionNudgeForRole("deacon", deaconDir)); err != nil {
+		fatalErr = fmt.Errorf("sending propulsion nudge: %w", err)
 		style.PrintWarning("failed to send propulsion nudge: %v", err)
 		notifyMayorDeaconStartup(
 			townRoot,
-			"Deacon startup warning: propulsion nudge",
-			fmt.Sprintf("Failed to send propulsion nudge in session %s.\nError: %v", sessionName, err),
+			"Deacon startup failed: propulsion nudge",
+			fmt.Sprintf("Failed to send propulsion nudge in session %s.\nError: %v\nAction: shutting down session.", sessionName, err),
 		)
+		goto Cleanup
 	}
 
 	return nil
+
+Cleanup:
+	if fatalErr == nil {
+		return nil
+	}
+	if err := t.KillSession(sessionName); err != nil {
+		return fmt.Errorf("deacon startup failed (%v); also failed to kill session: %w", fatalErr, err)
+	}
+	return fatalErr
 }
 
 func runDeaconStop(cmd *cobra.Command, args []string) error {
