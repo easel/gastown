@@ -867,3 +867,100 @@ exit 0
 			"Log output:\n%s", string(logBytes))
 	}
 }
+
+// TestIsCrewTarget verifies detection of crew targets in various formats.
+// This ensures gt sling can auto-start crew sessions when they don't exist.
+func TestIsCrewTarget(t *testing.T) {
+	// Create a minimal workspace with a crew member
+	townRoot := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(townRoot, "mayor", "rig"), 0755); err != nil {
+		t.Fatalf("mkdir mayor/rig: %v", err)
+	}
+	// Create a crew member directory
+	crewDir := filepath.Join(townRoot, "gastown", "crew", "max")
+	if err := os.MkdirAll(crewDir, 0755); err != nil {
+		t.Fatalf("mkdir crew dir: %v", err)
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(cwd) })
+	if err := os.Chdir(townRoot); err != nil {
+		t.Fatalf("chdir: %v", err)
+	}
+
+	tests := []struct {
+		name     string
+		target   string
+		wantRig  string
+		wantName string
+		wantIs   bool
+	}{
+		// Explicit crew format: rig/crew/name
+		{
+			name:     "explicit crew format",
+			target:   "gastown/crew/max",
+			wantRig:  "gastown",
+			wantName: "max",
+			wantIs:   true,
+		},
+		{
+			name:     "explicit crew format with different rig",
+			target:   "beads/crew/alice",
+			wantRig:  "beads",
+			wantName: "alice",
+			wantIs:   true,
+		},
+
+		// Shorthand format: rig/name where name is crew member on disk
+		{
+			name:     "shorthand format with existing crew member",
+			target:   "gastown/max",
+			wantRig:  "gastown",
+			wantName: "max",
+			wantIs:   true,
+		},
+
+		// Non-crew targets
+		{
+			name:   "polecat target",
+			target: "gastown/polecats/nux",
+			wantIs: false,
+		},
+		{
+			name:   "witness target",
+			target: "gastown/witness",
+			wantIs: false,
+		},
+		{
+			name:   "refinery target",
+			target: "gastown/refinery",
+			wantIs: false,
+		},
+		{
+			name:   "shorthand polecat (no crew dir exists)",
+			target: "gastown/nonexistent",
+			wantIs: false,
+		},
+		{
+			name:   "single segment (not a path)",
+			target: "crew",
+			wantIs: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotRig, gotName, gotIs := isCrewTarget(tt.target)
+			if gotIs != tt.wantIs {
+				t.Errorf("isCrewTarget(%q) isCrew = %v, want %v", tt.target, gotIs, tt.wantIs)
+			}
+			if gotIs && (gotRig != tt.wantRig || gotName != tt.wantName) {
+				t.Errorf("isCrewTarget(%q) = (%q, %q, %v), want (%q, %q, %v)",
+					tt.target, gotRig, gotName, gotIs, tt.wantRig, tt.wantName, tt.wantIs)
+			}
+		})
+	}
+}

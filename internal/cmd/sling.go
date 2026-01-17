@@ -282,6 +282,20 @@ func runSling(cmd *cobra.Command, args []string) error {
 					} else {
 						return fmt.Errorf("resolving target: %w", err)
 					}
+				} else if rigName, crewName, isCrew := isCrewTarget(target); isCrew {
+					// Crew target with no active session - auto-start it
+					fmt.Printf("Crew session not running, starting %s/%s...\n", rigName, crewName)
+					startCmd := exec.Command("gt", "crew", "start", rigName, crewName)
+					startCmd.Stdout = os.Stdout
+					startCmd.Stderr = os.Stderr
+					if startErr := startCmd.Run(); startErr != nil {
+						return fmt.Errorf("starting crew session %s/%s: %w", rigName, crewName, startErr)
+					}
+					// Retry resolution now that session is running
+					targetAgent, targetPane, targetWorkDir, err = resolveTargetAgent(target)
+					if err != nil {
+						return fmt.Errorf("resolving target after starting crew session: %w", err)
+					}
 				} else {
 					return fmt.Errorf("resolving target: %w", err)
 				}

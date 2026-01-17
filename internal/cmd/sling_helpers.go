@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -433,6 +434,45 @@ func wakeRigAgents(rigName string) {
 func isPolecatTarget(target string) bool {
 	parts := strings.Split(target, "/")
 	return len(parts) >= 3 && parts[1] == "polecats"
+}
+
+// isCrewTarget checks if the target string refers to a crew member.
+// Returns (rig, name, true) if the target is a crew member.
+// Handles two formats:
+//   - Explicit: "rig/crew/name" -> (rig, name, true)
+//   - Shorthand: "rig/name" where name is a crew member on disk -> (rig, name, true)
+//
+// This is used to determine if we should auto-start a crew session
+// instead of failing when slinging work.
+func isCrewTarget(target string) (rig, name string, isCrew bool) {
+	parts := strings.Split(target, "/")
+
+	// Explicit format: rig/crew/name
+	if len(parts) == 3 && parts[1] == "crew" {
+		return parts[0], parts[2], true
+	}
+
+	// Shorthand format: rig/name where name is a crew member
+	if len(parts) == 2 {
+		rigName := parts[0]
+		memberName := parts[1]
+		// Check if it's a known role (not a crew member)
+		switch strings.ToLower(memberName) {
+		case "witness", "refinery", "crew", "polecats":
+			return "", "", false
+		}
+		// Check if crew member directory exists
+		townRoot, err := workspace.FindFromCwd()
+		if err != nil {
+			return "", "", false
+		}
+		crewPath := filepath.Join(townRoot, rigName, "crew", memberName)
+		if info, err := os.Stat(crewPath); err == nil && info.IsDir() {
+			return rigName, memberName, true
+		}
+	}
+
+	return "", "", false
 }
 
 // attachPolecatWorkMolecule attaches the mol-polecat-work molecule to a polecat's agent bead.
