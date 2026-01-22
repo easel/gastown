@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -12,6 +13,9 @@ import (
 )
 
 func TestRunPSJSONIncludesAgentDetails(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("skipping on Windows: requires tmux/bd")
+	}
 	townRoot := t.TempDir()
 
 	mayorDir := filepath.Join(townRoot, "mayor")
@@ -184,6 +188,9 @@ exit 0
 }
 
 func TestCleanupOrphansDryRunReports(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("skipping on Windows: requires tmux/bd")
+	}
 	townRoot := t.TempDir()
 
 	mayorDir := filepath.Join(townRoot, "mayor")
@@ -282,6 +289,9 @@ exit 0
 }
 
 func TestCleanupSessionsDryRunReportsZombies(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("skipping on Windows: requires tmux/bd")
+	}
 	townRoot := t.TempDir()
 
 	mayorDir := filepath.Join(townRoot, "mayor")
@@ -383,6 +393,9 @@ exit 0
 }
 
 func TestCleanupStaleRunsPolecatStale(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("skipping on Windows: requires tmux/bd")
+	}
 	townRoot := t.TempDir()
 
 	mayorDir := filepath.Join(townRoot, "mayor")
