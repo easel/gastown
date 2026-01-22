@@ -402,7 +402,8 @@ func runRigAdd(cmd *cobra.Command, args []string) error {
 			var err error
 			gitURL, err = findGitRemoteURL(root)
 			if err != nil {
-				return fmt.Errorf("no git remote found: %w", err)
+				// Allow local repos without remotes; use local path as the source URL.
+				gitURL = root
 			}
 		}
 	} else if rigName == "" {
