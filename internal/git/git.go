@@ -482,11 +482,6 @@ func (g *Git) RemoteDefaultBranch() string {
 	return "main" // final fallback
 }
 
-// ConfigGet gets a git config value.
-func (g *Git) ConfigGet(key string) (string, error) {
-	return g.run("config", "--get", key)
-}
-
 // HasUncommittedChanges returns true if there are uncommitted changes.
 func (g *Git) HasUncommittedChanges() (bool, error) {
 	status, err := g.Status()
@@ -511,6 +506,17 @@ func (g *Git) Remotes() ([]string, error) {
 		return nil, nil
 	}
 	return strings.Split(out, "\n"), nil
+}
+
+// ConfigGet returns the value of a git config key.
+// Returns empty string if the key is not set.
+func (g *Git) ConfigGet(key string) (string, error) {
+	out, err := g.run("config", "--get", key)
+	if err != nil {
+		// git config --get returns exit code 1 if key not found
+		return "", nil
+	}
+	return out, nil
 }
 
 // SetRemoteURL sets an existing remote URL or adds it if missing.
