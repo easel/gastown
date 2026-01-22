@@ -78,31 +78,32 @@ func TestNewManager_PathConstruction(t *testing.T) {
 		},
 	}
 
-	// Use temp dirs to get platform-appropriate paths
-	tmpDir := t.TempDir()
-
 	tests := []struct {
 		name     string
 		townRoot string
 	}{
 		{
 			name:     "standard path",
-			townRoot: tmpDir,
+			townRoot: "/home/user/gt",
+		},
+		{
+			name:     "path with trailing slash",
+			townRoot: "/tmp/town/",
 		},
 		{
 			name:     "nested path",
-			townRoot: filepath.Join(tmpDir, "a", "b", "c"),
+			townRoot: "/a/b/c/d/e",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := NewManager(tt.townRoot, rigsConfig)
-			wantKennelPath := filepath.Join(tt.townRoot, "deacon", "dogs")
 
 			if m.townRoot != tt.townRoot {
 				t.Errorf("townRoot = %q, want %q", m.townRoot, tt.townRoot)
 			}
+			wantKennelPath := filepath.Join(tt.townRoot, "deacon", "dogs")
 			if m.kennelPath != wantKennelPath {
 				t.Errorf("kennelPath = %q, want %q", m.kennelPath, wantKennelPath)
 			}
