@@ -717,7 +717,6 @@ func runRigAdd(cmd *cobra.Command, args []string) error {
 						RoleType:   "crew",
 						Rig:        rigName,
 						AgentState: "idle",
-						RoleBead:   beads.RoleBeadIDTown("crew"),
 					}
 					desc := fmt.Sprintf("Crew worker %s in %s - human-managed persistent workspace.", spec.Name, rigName)
 					if _, err := bd.CreateAgentBead(crewID, desc, fields); err != nil {
