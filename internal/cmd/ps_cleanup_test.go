@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -12,6 +13,9 @@ import (
 )
 
 func TestRunPSJSONIncludesAgentDetails(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("skipping on Windows: complex tmux mocking not supported in batch")
+	}
 	townRoot := t.TempDir()
 
 	mayorDir := filepath.Join(townRoot, "mayor")
@@ -245,6 +249,9 @@ exit /b 0
 }
 
 func TestCleanupOrphansDryRunReports(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("skipping on Windows: complex tmux mocking not supported in batch")
+	}
 	townRoot := t.TempDir()
 
 	mayorDir := filepath.Join(townRoot, "mayor")
