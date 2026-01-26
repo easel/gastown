@@ -173,7 +173,7 @@ func (b *Beads) CreateAgentBead(id, title string, fields *AgentFields) (*Issue, 
 		"--description=" + description,
 		"--type=agent",
 		"--labels=gt:agent",
-		"--force",
+		"--force", // Agent IDs are multi-part and can resemble hash suffixes.
 	}
 	if NeedsForceForID(id) {
 		args = append(args, "--force")
@@ -184,6 +184,7 @@ func (b *Beads) CreateAgentBead(id, title string, fields *AgentFields) (*Issue, 
 	if actor := b.getActor(); actor != "" {
 		args = append(args, "--actor="+actor)
 	}
+	args = b.maybeForceRepo(args)
 
 	out, err := b.run(args...)
 	if err != nil {
