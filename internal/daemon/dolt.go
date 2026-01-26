@@ -321,6 +321,8 @@ func (m *DoltServerManager) Stop() error {
 }
 
 // stopLocked stops the Dolt server. Must be called with m.mu held.
+//
+//nolint:unparam // error return kept for future extensibility and API consistency
 func (m *DoltServerManager) stopLocked() error {
 	pid, running := m.isRunning()
 	if !running {
