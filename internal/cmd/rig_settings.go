@@ -201,7 +201,8 @@ func runRigSettingsUnset(cmd *cobra.Command, args []string) error {
 
 // parseValue attempts to parse a string value into the appropriate type.
 // Tries: bool → number → JSON → string
-func parseValue(s string) (interface{}, error) {
+// Returns error for future extensibility, though current implementation always succeeds.
+func parseValue(s string) (interface{}, error) { //nolint:unparam
 	// Try boolean
 	if s == "true" {
 		return true, nil
