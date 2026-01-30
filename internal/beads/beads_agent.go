@@ -184,6 +184,7 @@ func (b *Beads) CreateAgentBead(id, title string, fields *AgentFields) (*Issue, 
 	if actor := b.getActor(); actor != "" {
 		args = append(args, "--actor="+actor)
 	}
+	args = b.maybeForceRepo(args)
 
 	out, err := b.run(args...)
 	if err != nil {
