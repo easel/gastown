@@ -5,7 +5,7 @@ import (
 )
 
 func TestParallelReadySteps(t *testing.T) {
-	t.Skip("UPSTREAM BUG: mol-witness-patrol.formula.toml has invalid TOML (literal newlines in double-quoted strings)")
+	t.Skip("UPSTREAM: mol-witness-patrol.formula.toml lacks parallel=true on expected steps")
     // Parse the witness patrol formula
     f, err := ParseFile("formulas/mol-witness-patrol.formula.toml")
     if err != nil {
