@@ -3,7 +3,6 @@ package epic
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -183,106 +182,15 @@ func ForcePushBranch(workDir, remote, branch string) error {
 }
 
 // GetPRCIStatus gets CI status for a PR using gh CLI.
+// This is a convenience function that uses the DefaultGHClient.
 func GetPRCIStatus(workDir string, prNumber int) (*CIStatus, error) {
-	cmd := exec.Command("gh", "pr", "checks", fmt.Sprintf("%d", prNumber), "--json", "state,name,detailsUrl")
-	cmd.Dir = workDir
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("getting PR checks: %w (%s)", err, strings.TrimSpace(stderr.String()))
-	}
-
-	var checks []struct {
-		State      string `json:"state"`
-		Name       string `json:"name"`
-		DetailsURL string `json:"detailsUrl"`
-	}
-
-	if err := json.Unmarshal(stdout.Bytes(), &checks); err != nil {
-		return nil, fmt.Errorf("parsing PR checks: %w", err)
-	}
-
-	// Aggregate check status
-	status := &CIStatus{
-		PRNumber: prNumber,
-		State:    "success",
-	}
-
-	var failedChecks []string
-	var pendingChecks []string
-
-	for _, check := range checks {
-		switch check.State {
-		case "FAILURE", "ERROR":
-			status.State = "failure"
-			failedChecks = append(failedChecks, check.Name)
-			if status.URL == "" {
-				status.URL = check.DetailsURL
-			}
-		case "PENDING", "QUEUED", "IN_PROGRESS":
-			if status.State != "failure" {
-				status.State = "pending"
-			}
-			pendingChecks = append(pendingChecks, check.Name)
-		}
-	}
-
-	if len(failedChecks) > 0 {
-		status.Details = fmt.Sprintf("Failed: %s", strings.Join(failedChecks, ", "))
-	} else if len(pendingChecks) > 0 {
-		status.Details = fmt.Sprintf("Pending: %s", strings.Join(pendingChecks, ", "))
-	} else {
-		status.Details = "All checks passed"
-	}
-
-	return status, nil
+	return GetPRCIStatusWithClient(DefaultGHClient, workDir, prNumber)
 }
 
 // GetPRReviewStatus gets review status for a PR using gh CLI.
+// This is a convenience function that uses the DefaultGHClient.
 func GetPRReviewStatus(workDir string, prNumber int) (string, int, error) {
-	cmd := exec.Command("gh", "pr", "view", fmt.Sprintf("%d", prNumber), "--json", "reviewDecision,reviews")
-	cmd.Dir = workDir
-	var stdout bytes.Buffer
-	cmd.Stdout = &stdout
-
-	if err := cmd.Run(); err != nil {
-		return "", 0, fmt.Errorf("getting PR review status: %w", err)
-	}
-
-	var result struct {
-		ReviewDecision string `json:"reviewDecision"`
-		Reviews        []struct {
-			State string `json:"state"`
-		} `json:"reviews"`
-	}
-
-	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
-		return "", 0, fmt.Errorf("parsing PR review status: %w", err)
-	}
-
-	// Count approvals
-	approvals := 0
-	for _, review := range result.Reviews {
-		if review.State == "APPROVED" {
-			approvals++
-		}
-	}
-
-	// Map review decision to status
-	status := "pending"
-	switch result.ReviewDecision {
-	case "APPROVED":
-		status = PRStatusApproved
-	case "CHANGES_REQUESTED":
-		status = PRStatusChangesRequested
-	case "REVIEW_REQUIRED":
-		status = "review_required"
-	}
-
-	return status, approvals, nil
+	return GetPRReviewStatusWithClient(DefaultGHClient, workDir, prNumber)
 }
 
 // Helper functions
