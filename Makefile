@@ -1,4 +1,4 @@
-.PHONY: build install clean test generate container-test
+.PHONY: build install clean test test-e2e test-e2e-container container-test generate
 
 BINARY := gt
 BUILD_DIR := .
@@ -37,6 +37,15 @@ clean:
 
 test:
 	go test ./...
+
+# Run e2e tests locally (may have false failures from host environment leakage)
+test-e2e:
+	go test -tags=integration -run 'TestInstallDoctorClean' ./internal/cmd -v -timeout=5m
+
+# Run e2e tests in isolated container (recommended for CI)
+test-e2e-container:
+	docker build -f Dockerfile.e2e -t gastown-test .
+	docker run --rm gastown-test
 
 container-test:
 	@docker run --rm \
