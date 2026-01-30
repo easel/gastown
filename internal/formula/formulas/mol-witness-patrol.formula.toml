@@ -3,11 +3,27 @@ formula = 'mol-witness-patrol'
 version = 2
 
 [[steps]]
-description = "Check inbox and handle messages.\n\n```bash\ngt mail inbox\n```\n\nFor each message:\n\n**POLECAT_STARTED**:\nA new polecat has started working. Acknowledge and archive.\n```bash\n# Acknowledge startup (optional: log for activity tracking)\ngt mail archive <message-id>\n```\nNo action needed beyond acknowledgment - archive immediately.\n\n**POLECAT_DONE / LIFECYCLE:Shutdown**:
+description = """Check inbox and handle messages.
+
+```bash
+gt mail inbox
+```
+
+For each message:
+
+**POLECAT_STARTED**:
+A new polecat has started working. Acknowledge and archive.
+```bash
+# Acknowledge startup (optional: log for activity tracking)
+gt mail archive <message-id>
+```
+No action needed beyond acknowledgment - archive immediately.
+
+**POLECAT_DONE / LIFECYCLE:Shutdown**:
 
 **CRITICAL: Parse the polecat name from the message subject.**
 The subject format is `POLECAT_DONE <polecat-name>` or `LIFECYCLE:Shutdown <polecat-name>`.
-For example, if subject is \"LIFECYCLE:Shutdown alpha\", the polecat name is \"alpha\".
+For example, if subject is "LIFECYCLE:Shutdown alpha", the polecat name is "alpha".
 
 **DO NOT** run `gt polecat list` and nuke whatever polecat you find.
 **ONLY** nuke the specific polecat named in the message subject.
@@ -25,7 +41,7 @@ Steps to handle:
 1. Extract `<polecat-name>` from the message subject
 2. Check if that specific polecat exists:
    ```bash
-   gt polecat list <rig> | grep \"<polecat-name>\"
+   gt polecat list <rig> | grep "<polecat-name>"
    ```
 3. If polecat doesn't exist, it's already gone - just archive the message
 4. If polecat exists, check cleanup_status and nuke ONLY that polecat:
@@ -35,7 +51,55 @@ Steps to handle:
 5. Archive the message after handling
 
 Cleanup wisps are only created when something is wrong (uncommitted changes,
-unpushed commits). Most POLECAT_DONE messages result in immediate nuke.\n\n**MERGED**:\nA branch was merged successfully. This is informational in the ephemeral model\nsince the polecat was already nuked after MR submission.\n\nIf a cleanup wisp exists (dirty state), complete the cleanup:\n```bash\n# Find the cleanup wisp for this polecat\nbd list --wisp --labels=polecat:<name>,state:merge-requested --status=open\n\n# If found, proceed with full polecat nuke:\ngt polecat nuke <name>\n\n# Burn the cleanup wisp\nbd close <wisp-id>\n```\nArchive after cleanup is complete.\n\n**HELP / Blocked**:\nAssess the request. Can you help? If not, escalate to Mayor:\n```bash\ngt mail send mayor/ -s \"Escalation: <polecat> needs help\" -m \"<details>\"\n```\nArchive after handling (escalated or resolved):\n```bash\ngt mail archive <message-id>\n```\n\n**HANDOFF**:\nRead predecessor context. Continue from where they left off.\nArchive after absorbing context:\n```bash\ngt mail archive <message-id>\n```\n\n**SWARM_START**:\nMayor initiating batch polecat work. Initialize swarm tracking.\n```bash\n# Parse swarm info from mail body: {\"swarm_id\": \"batch-123\", \"beads\": [\"bd-a\", \"bd-b\"]}\nbd create --wisp --title \"swarm:<swarm_id>\" --description \"Tracking batch: <swarm_id>\" --labels swarm,swarm_id:<swarm_id>,total:<N>,completed:0,start:<timestamp>\n```\nArchive after creating swarm tracking wisp:\n```bash\ngt mail archive <message-id>\n```\n\n**Hygiene principle**: Archive messages after they're fully processed.\nKeep only: active work, unprocessed requests. Inbox should be near-empty."
+unpushed commits). Most POLECAT_DONE messages result in immediate nuke.
+
+**MERGED**:
+A branch was merged successfully. This is informational in the ephemeral model
+since the polecat was already nuked after MR submission.
+
+If a cleanup wisp exists (dirty state), complete the cleanup:
+```bash
+# Find the cleanup wisp for this polecat
+bd list --wisp --labels=polecat:<name>,state:merge-requested --status=open
+
+# If found, proceed with full polecat nuke:
+gt polecat nuke <name>
+
+# Burn the cleanup wisp
+bd close <wisp-id>
+```
+Archive after cleanup is complete.
+
+**HELP / Blocked**:
+Assess the request. Can you help? If not, escalate to Mayor:
+```bash
+gt mail send mayor/ -s "Escalation: <polecat> needs help" -m "<details>"
+```
+Archive after handling (escalated or resolved):
+```bash
+gt mail archive <message-id>
+```
+
+**HANDOFF**:
+Read predecessor context. Continue from where they left off.
+Archive after absorbing context:
+```bash
+gt mail archive <message-id>
+```
+
+**SWARM_START**:
+Mayor initiating batch polecat work. Initialize swarm tracking.
+```bash
+# Parse swarm info from mail body: {"swarm_id": "batch-123", "beads": ["bd-a", "bd-b"]}
+bd create --wisp --title "swarm:<swarm_id>" --description "Tracking batch: <swarm_id>" --labels swarm,swarm_id:<swarm_id>,total:<N>,completed:0,start:<timestamp>
+```
+Archive after creating swarm tracking wisp:
+```bash
+gt mail archive <message-id>
+```
+
+**Hygiene principle**: Archive messages after they're fully processed.
+Keep only: active work, unprocessed requests. Inbox should be near-empty."""
 id = 'inbox-check'
 title = 'Process witness mail'
 
