@@ -641,3 +641,486 @@ func TestPRStatusConstants(t *testing.T) {
 		t.Errorf("PRStatusDraft: expected 'draft', got '%s'", PRStatusDraft)
 	}
 }
+
+// === Tests using StubGHClient ===
+
+func TestGetPRCIStatusWithClient_AllPassing(t *testing.T) {
+	stub := &StubGHClient{
+		ChecksResponse: []PRCheck{
+			{State: "SUCCESS", Name: "lint", DetailsURL: "https://example.com/lint"},
+			{State: "SUCCESS", Name: "test", DetailsURL: "https://example.com/test"},
+			{State: "SUCCESS", Name: "build", DetailsURL: "https://example.com/build"},
+		},
+	}
+
+	status, err := GetPRCIStatusWithClient(stub, "/fake/dir", 123)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if status.State != "success" {
+		t.Errorf("expected state 'success', got '%s'", status.State)
+	}
+	if status.PRNumber != 123 {
+		t.Errorf("expected PR number 123, got %d", status.PRNumber)
+	}
+	if status.Details != "All checks passed" {
+		t.Errorf("expected 'All checks passed', got '%s'", status.Details)
+	}
+
+	// Verify the client was called correctly
+	if len(stub.CallLog) != 1 {
+		t.Fatalf("expected 1 call, got %d", len(stub.CallLog))
+	}
+	if stub.CallLog[0].Method != "GetPRChecks" {
+		t.Errorf("expected GetPRChecks, got %s", stub.CallLog[0].Method)
+	}
+	if stub.CallLog[0].PRNumber != 123 {
+		t.Errorf("expected PR 123, got %d", stub.CallLog[0].PRNumber)
+	}
+}
+
+func TestGetPRCIStatusWithClient_WithFailure(t *testing.T) {
+	stub := &StubGHClient{
+		ChecksResponse: []PRCheck{
+			{State: "SUCCESS", Name: "lint", DetailsURL: "https://example.com/lint"},
+			{State: "FAILURE", Name: "test", DetailsURL: "https://example.com/test"},
+			{State: "SUCCESS", Name: "build", DetailsURL: "https://example.com/build"},
+		},
+	}
+
+	status, err := GetPRCIStatusWithClient(stub, "/fake/dir", 456)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if status.State != "failure" {
+		t.Errorf("expected state 'failure', got '%s'", status.State)
+	}
+	if status.Details != "Failed: test" {
+		t.Errorf("expected 'Failed: test', got '%s'", status.Details)
+	}
+	if status.URL != "https://example.com/test" {
+		t.Errorf("expected URL to first failed check, got '%s'", status.URL)
+	}
+}
+
+func TestGetPRCIStatusWithClient_WithMultipleFailures(t *testing.T) {
+	stub := &StubGHClient{
+		ChecksResponse: []PRCheck{
+			{State: "FAILURE", Name: "lint", DetailsURL: "https://example.com/lint"},
+			{State: "FAILURE", Name: "test", DetailsURL: "https://example.com/test"},
+			{State: "SUCCESS", Name: "build", DetailsURL: "https://example.com/build"},
+		},
+	}
+
+	status, err := GetPRCIStatusWithClient(stub, "/fake/dir", 789)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if status.State != "failure" {
+		t.Errorf("expected state 'failure', got '%s'", status.State)
+	}
+	if status.Details != "Failed: lint, test" {
+		t.Errorf("expected 'Failed: lint, test', got '%s'", status.Details)
+	}
+	// URL should be from first failed check
+	if status.URL != "https://example.com/lint" {
+		t.Errorf("expected URL to first failed check, got '%s'", status.URL)
+	}
+}
+
+func TestGetPRCIStatusWithClient_WithPending(t *testing.T) {
+	stub := &StubGHClient{
+		ChecksResponse: []PRCheck{
+			{State: "SUCCESS", Name: "lint", DetailsURL: "https://example.com/lint"},
+			{State: "PENDING", Name: "test", DetailsURL: "https://example.com/test"},
+			{State: "IN_PROGRESS", Name: "build", DetailsURL: "https://example.com/build"},
+		},
+	}
+
+	status, err := GetPRCIStatusWithClient(stub, "/fake/dir", 111)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if status.State != "pending" {
+		t.Errorf("expected state 'pending', got '%s'", status.State)
+	}
+	if status.Details != "Pending: test, build" {
+		t.Errorf("expected 'Pending: test, build', got '%s'", status.Details)
+	}
+}
+
+func TestGetPRCIStatusWithClient_FailureTakesPrecedenceOverPending(t *testing.T) {
+	stub := &StubGHClient{
+		ChecksResponse: []PRCheck{
+			{State: "SUCCESS", Name: "lint", DetailsURL: "https://example.com/lint"},
+			{State: "PENDING", Name: "test", DetailsURL: "https://example.com/test"},
+			{State: "FAILURE", Name: "build", DetailsURL: "https://example.com/build"},
+		},
+	}
+
+	status, err := GetPRCIStatusWithClient(stub, "/fake/dir", 222)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Failure should take precedence over pending
+	if status.State != "failure" {
+		t.Errorf("expected state 'failure', got '%s'", status.State)
+	}
+}
+
+func TestGetPRCIStatusWithClient_ErrorState(t *testing.T) {
+	stub := &StubGHClient{
+		ChecksResponse: []PRCheck{
+			{State: "SUCCESS", Name: "lint", DetailsURL: "https://example.com/lint"},
+			{State: "ERROR", Name: "test", DetailsURL: "https://example.com/test"},
+		},
+	}
+
+	status, err := GetPRCIStatusWithClient(stub, "/fake/dir", 333)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// ERROR should be treated as failure
+	if status.State != "failure" {
+		t.Errorf("expected state 'failure', got '%s'", status.State)
+	}
+}
+
+func TestGetPRCIStatusWithClient_QueuedState(t *testing.T) {
+	stub := &StubGHClient{
+		ChecksResponse: []PRCheck{
+			{State: "SUCCESS", Name: "lint", DetailsURL: "https://example.com/lint"},
+			{State: "QUEUED", Name: "test", DetailsURL: "https://example.com/test"},
+		},
+	}
+
+	status, err := GetPRCIStatusWithClient(stub, "/fake/dir", 444)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// QUEUED should be treated as pending
+	if status.State != "pending" {
+		t.Errorf("expected state 'pending', got '%s'", status.State)
+	}
+}
+
+func TestGetPRCIStatusWithClient_Error(t *testing.T) {
+	stub := &StubGHClient{
+		ChecksError: &gitError{args: []string{"gh", "pr", "checks"}, output: "not found", err: nil},
+	}
+
+	_, err := GetPRCIStatusWithClient(stub, "/fake/dir", 555)
+	if err == nil {
+		t.Error("expected error")
+	}
+}
+
+func TestGetPRCIStatusWithClient_EmptyChecks(t *testing.T) {
+	stub := &StubGHClient{
+		ChecksResponse: []PRCheck{},
+	}
+
+	status, err := GetPRCIStatusWithClient(stub, "/fake/dir", 666)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// No checks should result in success
+	if status.State != "success" {
+		t.Errorf("expected state 'success', got '%s'", status.State)
+	}
+	if status.Details != "All checks passed" {
+		t.Errorf("expected 'All checks passed', got '%s'", status.Details)
+	}
+}
+
+func TestGetPRReviewStatusWithClient_Approved(t *testing.T) {
+	stub := &StubGHClient{
+		ReviewsResponse: &PRReviewInfo{
+			ReviewDecision: "APPROVED",
+			Reviews: []PRReview{
+				{State: "APPROVED"},
+				{State: "APPROVED"},
+			},
+		},
+	}
+
+	status, approvals, err := GetPRReviewStatusWithClient(stub, "/fake/dir", 123)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if status != PRStatusApproved {
+		t.Errorf("expected status '%s', got '%s'", PRStatusApproved, status)
+	}
+	if approvals != 2 {
+		t.Errorf("expected 2 approvals, got %d", approvals)
+	}
+
+	// Verify the client was called correctly
+	if len(stub.CallLog) != 1 {
+		t.Fatalf("expected 1 call, got %d", len(stub.CallLog))
+	}
+	if stub.CallLog[0].Method != "GetPRReviews" {
+		t.Errorf("expected GetPRReviews, got %s", stub.CallLog[0].Method)
+	}
+}
+
+func TestGetPRReviewStatusWithClient_ChangesRequested(t *testing.T) {
+	stub := &StubGHClient{
+		ReviewsResponse: &PRReviewInfo{
+			ReviewDecision: "CHANGES_REQUESTED",
+			Reviews: []PRReview{
+				{State: "CHANGES_REQUESTED"},
+			},
+		},
+	}
+
+	status, approvals, err := GetPRReviewStatusWithClient(stub, "/fake/dir", 456)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if status != PRStatusChangesRequested {
+		t.Errorf("expected status '%s', got '%s'", PRStatusChangesRequested, status)
+	}
+	if approvals != 0 {
+		t.Errorf("expected 0 approvals, got %d", approvals)
+	}
+}
+
+func TestGetPRReviewStatusWithClient_ReviewRequired(t *testing.T) {
+	stub := &StubGHClient{
+		ReviewsResponse: &PRReviewInfo{
+			ReviewDecision: "REVIEW_REQUIRED",
+			Reviews:        []PRReview{},
+		},
+	}
+
+	status, approvals, err := GetPRReviewStatusWithClient(stub, "/fake/dir", 789)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if status != "review_required" {
+		t.Errorf("expected status 'review_required', got '%s'", status)
+	}
+	if approvals != 0 {
+		t.Errorf("expected 0 approvals, got %d", approvals)
+	}
+}
+
+func TestGetPRReviewStatusWithClient_Pending(t *testing.T) {
+	stub := &StubGHClient{
+		ReviewsResponse: &PRReviewInfo{
+			ReviewDecision: "", // Empty means pending
+			Reviews:        []PRReview{},
+		},
+	}
+
+	status, approvals, err := GetPRReviewStatusWithClient(stub, "/fake/dir", 111)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if status != "pending" {
+		t.Errorf("expected status 'pending', got '%s'", status)
+	}
+	if approvals != 0 {
+		t.Errorf("expected 0 approvals, got %d", approvals)
+	}
+}
+
+func TestGetPRReviewStatusWithClient_MixedReviews(t *testing.T) {
+	stub := &StubGHClient{
+		ReviewsResponse: &PRReviewInfo{
+			ReviewDecision: "APPROVED",
+			Reviews: []PRReview{
+				{State: "APPROVED"},
+				{State: "COMMENTED"},
+				{State: "APPROVED"},
+				{State: "DISMISSED"},
+			},
+		},
+	}
+
+	status, approvals, err := GetPRReviewStatusWithClient(stub, "/fake/dir", 222)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if status != PRStatusApproved {
+		t.Errorf("expected status '%s', got '%s'", PRStatusApproved, status)
+	}
+	// Only APPROVED states should be counted
+	if approvals != 2 {
+		t.Errorf("expected 2 approvals, got %d", approvals)
+	}
+}
+
+func TestGetPRReviewStatusWithClient_Error(t *testing.T) {
+	stub := &StubGHClient{
+		ReviewsError: &gitError{args: []string{"gh", "pr", "view"}, output: "not found", err: nil},
+	}
+
+	_, _, err := GetPRReviewStatusWithClient(stub, "/fake/dir", 333)
+	if err == nil {
+		t.Error("expected error")
+	}
+}
+
+func TestStubGHClient_CallLogTracking(t *testing.T) {
+	stub := &StubGHClient{
+		ChecksResponse: []PRCheck{},
+		ReviewsResponse: &PRReviewInfo{
+			ReviewDecision: "APPROVED",
+			Reviews:        []PRReview{{State: "APPROVED"}},
+		},
+	}
+
+	// Make multiple calls
+	_, _ = GetPRCIStatusWithClient(stub, "/dir1", 100)
+	_, _ = GetPRCIStatusWithClient(stub, "/dir2", 200)
+	_, _, _ = GetPRReviewStatusWithClient(stub, "/dir3", 300)
+
+	// Verify call log
+	if len(stub.CallLog) != 3 {
+		t.Fatalf("expected 3 calls, got %d", len(stub.CallLog))
+	}
+
+	// First call
+	if stub.CallLog[0].Method != "GetPRChecks" || stub.CallLog[0].WorkDir != "/dir1" || stub.CallLog[0].PRNumber != 100 {
+		t.Errorf("unexpected first call: %+v", stub.CallLog[0])
+	}
+
+	// Second call
+	if stub.CallLog[1].Method != "GetPRChecks" || stub.CallLog[1].WorkDir != "/dir2" || stub.CallLog[1].PRNumber != 200 {
+		t.Errorf("unexpected second call: %+v", stub.CallLog[1])
+	}
+
+	// Third call
+	if stub.CallLog[2].Method != "GetPRReviews" || stub.CallLog[2].WorkDir != "/dir3" || stub.CallLog[2].PRNumber != 300 {
+		t.Errorf("unexpected third call: %+v", stub.CallLog[2])
+	}
+}
+
+func TestAggregateCIStatus_DirectCall(t *testing.T) {
+	// Test the aggregateCIStatus function directly
+	tests := []struct {
+		name           string
+		prNumber       int
+		checks         []PRCheck
+		expectedState  string
+		expectedDetail string
+	}{
+		{
+			name:           "empty checks",
+			prNumber:       1,
+			checks:         []PRCheck{},
+			expectedState:  "success",
+			expectedDetail: "All checks passed",
+		},
+		{
+			name:     "all success",
+			prNumber: 2,
+			checks: []PRCheck{
+				{State: "SUCCESS", Name: "a"},
+				{State: "SUCCESS", Name: "b"},
+			},
+			expectedState:  "success",
+			expectedDetail: "All checks passed",
+		},
+		{
+			name:     "one failure",
+			prNumber: 3,
+			checks: []PRCheck{
+				{State: "SUCCESS", Name: "a"},
+				{State: "FAILURE", Name: "b"},
+			},
+			expectedState:  "failure",
+			expectedDetail: "Failed: b",
+		},
+		{
+			name:     "one pending",
+			prNumber: 4,
+			checks: []PRCheck{
+				{State: "SUCCESS", Name: "a"},
+				{State: "PENDING", Name: "b"},
+			},
+			expectedState:  "pending",
+			expectedDetail: "Pending: b",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := aggregateCIStatus(tt.prNumber, tt.checks)
+			if result.State != tt.expectedState {
+				t.Errorf("expected state %s, got %s", tt.expectedState, result.State)
+			}
+			if result.Details != tt.expectedDetail {
+				t.Errorf("expected detail '%s', got '%s'", tt.expectedDetail, result.Details)
+			}
+			if result.PRNumber != tt.prNumber {
+				t.Errorf("expected PR %d, got %d", tt.prNumber, result.PRNumber)
+			}
+		})
+	}
+}
+
+func TestParseReviewStatus_DirectCall(t *testing.T) {
+	// Test the parseReviewStatus function directly
+	tests := []struct {
+		name              string
+		info              *PRReviewInfo
+		expectedStatus    string
+		expectedApprovals int
+	}{
+		{
+			name:              "approved with two approvals",
+			info:              &PRReviewInfo{ReviewDecision: "APPROVED", Reviews: []PRReview{{State: "APPROVED"}, {State: "APPROVED"}}},
+			expectedStatus:    PRStatusApproved,
+			expectedApprovals: 2,
+		},
+		{
+			name:              "changes requested",
+			info:              &PRReviewInfo{ReviewDecision: "CHANGES_REQUESTED", Reviews: []PRReview{{State: "CHANGES_REQUESTED"}}},
+			expectedStatus:    PRStatusChangesRequested,
+			expectedApprovals: 0,
+		},
+		{
+			name:              "review required",
+			info:              &PRReviewInfo{ReviewDecision: "REVIEW_REQUIRED", Reviews: []PRReview{}},
+			expectedStatus:    "review_required",
+			expectedApprovals: 0,
+		},
+		{
+			name:              "pending (empty decision)",
+			info:              &PRReviewInfo{ReviewDecision: "", Reviews: []PRReview{}},
+			expectedStatus:    "pending",
+			expectedApprovals: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			status, approvals, err := parseReviewStatus(tt.info)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if status != tt.expectedStatus {
+				t.Errorf("expected status %s, got %s", tt.expectedStatus, status)
+			}
+			if approvals != tt.expectedApprovals {
+				t.Errorf("expected %d approvals, got %d", tt.expectedApprovals, approvals)
+			}
+		})
+	}
+}
