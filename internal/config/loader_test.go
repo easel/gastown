@@ -2447,6 +2447,7 @@ func TestBuildCommandWithPromptRespectsPromptModeNone(t *testing.T) {
 //  5. Repeat for all 7 built-in agents
 func TestRoleAgentConfigWithCustomAgent(t *testing.T) {
 	t.Parallel()
+	skipIfAgentBinaryMissing(t, "claude", "opencode")
 
 	townRoot := t.TempDir()
 	rigPath := filepath.Join(townRoot, "testrig")
@@ -2628,6 +2629,7 @@ func TestMultipleAgentTypes(t *testing.T) {
 // to be explicitly defined as custom agents since they are NOT built-in presets.
 func TestCustomClaudeVariants(t *testing.T) {
 	t.Parallel()
+	skipIfAgentBinaryMissing(t, "claude")
 
 	// Verify that claude-opus/sonnet/haiku are NOT built-in presets
 	variants := []string{"claude-opus", "claude-sonnet", "claude-haiku"}
