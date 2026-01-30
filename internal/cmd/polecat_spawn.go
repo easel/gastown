@@ -277,7 +277,7 @@ func cleanupStalePolecatsForSling(mgr *polecat.Manager, r *rig.Rig) {
 			continue
 		}
 
-		if err := mgr.RemoveWithOptions(info.Name, false, false); err != nil {
+		if err := mgr.RemoveWithOptions(info.Name, false, false, false); err != nil {
 			fmt.Printf("Warning: could not clean stale polecat %s: %v\n", info.Name, err)
 			continue
 		}
