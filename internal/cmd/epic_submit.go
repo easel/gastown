@@ -298,8 +298,10 @@ func extractStepRef(st *beads.Issue) string {
 	// Look for "step: <ref>" in description
 	for _, line := range strings.Split(st.Description, "\n") {
 		line = strings.TrimSpace(line)
-		if strings.HasPrefix(strings.ToLower(line), "step:") {
-			return strings.TrimSpace(strings.TrimPrefix(line, "step:"))
+		lowerLine := strings.ToLower(line)
+		if strings.HasPrefix(lowerLine, "step:") {
+			// Extract the part after "step:" (case-insensitive)
+			return strings.TrimSpace(line[5:]) // len("step:") == 5
 		}
 	}
 	// Fall back to sanitized title
