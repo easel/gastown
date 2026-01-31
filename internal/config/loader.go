@@ -935,7 +935,7 @@ func lookupAgentConfigIfExists(name string, townSettings *TownSettings, rigSetti
 
 	// Check built-in presets
 	if preset := GetAgentPresetByName(name); preset != nil {
-		return RuntimeConfigFromPreset(AgentPreset(name))
+		return fillRuntimeDefaults(RuntimeConfigFromPreset(AgentPreset(name)))
 	}
 
 	return nil
@@ -1067,7 +1067,7 @@ func lookupAgentConfig(name string, townSettings *TownSettings, rigSettings *Rig
 
 	// Check built-in presets from agents.go
 	if preset := GetAgentPresetByName(name); preset != nil {
-		return RuntimeConfigFromPreset(AgentPreset(name))
+		return fillRuntimeDefaults(RuntimeConfigFromPreset(AgentPreset(name)))
 	}
 
 	// Fallback to claude defaults
@@ -1153,7 +1153,8 @@ func fillRuntimeDefaults(rc *RuntimeConfig) *RuntimeConfig {
 		result.Args = []string{"--dangerously-skip-permissions"}
 	}
 
-	return result
+	// Normalize to fill in all defaults (including Hooks, Session, Tmux, etc.)
+	return normalizeRuntimeConfig(result)
 }
 
 // GetRuntimeCommand is a convenience function that returns the full command string
