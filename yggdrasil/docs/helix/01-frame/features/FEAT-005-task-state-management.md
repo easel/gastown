@@ -8,11 +8,11 @@
 **Updated**: 2026-02-01
 
 ## Overview
-Define and manage task and state semantics aligned with dun and HELIX. This feature will establish how tasks are represented, tracked, and updated across the orchestration lifecycle.
+Define and manage task and state semantics aligned with dun and HELIX. This feature establishes how tasks are represented, tracked, and updated across the orchestration lifecycle.
 
 ## Problem Statement
 
-Without a shared task/state model, coordination across delegation, agent sessions, and merge queues becomes inconsistent and hard to test. A clear, testable task/state model is required, but must be informed by validated session, workspace, and communication behaviors.
+Without a shared task/state model, coordination across delegation, agent sessions, and merge queues becomes inconsistent and hard to test. A clear, testable task/state model is required, informed by validated session, workspace, and communication behaviors.
 
 ## Requirements
 
@@ -21,11 +21,16 @@ Without a shared task/state model, coordination across delegation, agent session
 - Persist task and execution state locally with auditability
 - Provide queryable task status for CLI operations
 - Support linking tasks to workspaces, agents, and repositories
+- Support task dependencies and ownership changes
 
 ### Non-Functional Requirements
 - **Performance**: [NEEDS CLARIFICATION: Task state read/write latency targets]
 - **Security**: Access limited to local user; no secret leakage in task logs
 - **Reliability**: Atomic state updates and recovery on crash
+
+## Schema Reference
+
+See `docs/helix/01-frame/research-plan/findings/task-state-schema-v0.md` (v1 draft) for the current proposed fields, transitions, and links.
 
 ## Edge Cases and Error Handling
 - Partial task updates and conflicting state transitions
@@ -39,8 +44,8 @@ Without a shared task/state model, coordination across delegation, agent session
 ## Constraints and Assumptions
 
 ### Constraints
-- Task/state model is **deferred** until core session management, workspace management, and cross-agent communication behaviors are validated
 - Local-only persistence for MVP
+- Schema may evolve once FEAT-006/FEAT-008 are finalized
 
 ### Assumptions
 - Dun and HELIX artifacts provide baseline structure, but need refinement
@@ -66,6 +71,7 @@ Without a shared task/state model, coordination across delegation, agent session
 ### Related Artifacts
 - **Parent PRD Section**: Requirements Overview (P0)
 - **Feature Registry**: `docs/helix/01-frame/feature-registry.md`
+- **Schema Draft**: `docs/helix/01-frame/research-plan/findings/task-state-schema-v0.md`
 
 ---
 *Note: Task/state schema design is deferred until core session and workspace behaviors are validated.*
