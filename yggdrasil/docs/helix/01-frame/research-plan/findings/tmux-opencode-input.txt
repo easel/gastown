@@ -1,0 +1,24 @@
+
+
+
+
+
+                                                      
+
+              Commands                                         esc
+
+              Search
+
+   
+     Ask     Suggested
+             Switch model                                ctrl+x m
+     Buil
+       Session                                                 
+              Open editor                                 ctrl+x e    commands
+              Switch session                              ctrl+x l
+
+
+
+
+  ~/gt/yggdrasil/crew/odin:main                                         1.1.48
+

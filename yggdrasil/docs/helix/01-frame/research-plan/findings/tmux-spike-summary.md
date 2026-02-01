@@ -22,6 +22,12 @@
 - **Codex CLI**: Trust/approval prompt displayed on launch with `--no-alt-screen`.
 - **OpenCode CLI**: TUI rendered within 8s and captured in tmux.
 
+## Input Injection Observations
+- **Claude Code**: Sent `2` and observed input rendered on the trust prompt screen.
+- **Gemini CLI**: Sent `?` and observed input rendered in the prompt line.
+- **Codex CLI**: Sent `/status` and observed input rendered in the TUI.
+- **OpenCode CLI**: Sent `Ctrl+P` and observed command palette UI.
+
 ## Limitations
 - Input injection behavior not verified beyond basic `tmux send-keys`.
 - Gemini output required `--screen-reader` to render in text capture.
