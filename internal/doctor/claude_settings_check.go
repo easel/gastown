@@ -141,21 +141,11 @@ func (c *ClaudeSettingsCheck) findSettingsFiles(townRoot string) []staleSettings
 		})
 	}
 
-	// Check for STALE CLAUDE.md at town root (~/gt/CLAUDE.md)
-	// This is WRONG - CLAUDE.md here is inherited by ALL agents via directory traversal,
-	// causing crew/polecat/etc to receive Mayor-specific instructions.
-	// Mayor's CLAUDE.md should be at ~/gt/mayor/CLAUDE.md instead.
-	staleTownRootCLAUDEmd := filepath.Join(townRoot, "CLAUDE.md")
-	if fileExists(staleTownRootCLAUDEmd) {
-		files = append(files, staleSettingsInfo{
-			path:          staleTownRootCLAUDEmd,
-			agentType:     "mayor",
-			sessionName:   "hq-mayor",
-			wrongLocation: true,
-			gitStatus:     c.getGitFileStatus(staleTownRootCLAUDEmd),
-			missing:       []string{"should be at mayor/CLAUDE.md, not town root"},
-		})
-	}
+	// NOTE: Town root CLAUDE.md (~/gt/CLAUDE.md) is now INTENTIONALLY created by gt install.
+	// It contains a generic identity anchor (not Mayor-specific) that tells agents to run gt prime.
+	// This is the correct behavior - Mayor/Deacon run from the town root and need this file.
+	// Crew/polecats have their own nested git repos and won't inherit it.
+	// See install.go createTownRootCLAUDEmd() for the content.
 
 	// Town-level: mayor (~/gt/mayor/.claude/settings.json) - CORRECT location
 	mayorSettings := filepath.Join(townRoot, "mayor", ".claude", "settings.json")
