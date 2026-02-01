@@ -25,7 +25,6 @@ Complex work needs to be decomposed and delegated to agents. Without a consisten
 - Surface task summaries for operators
 
 ### Non-Functional Requirements
-- **Performance**: [NEEDS CLARIFICATION: Max task creation latency]
 - **Reliability**: Delegation status is consistent and recoverable
 - **Usability**: CLI output clearly shows task ownership and status
 
@@ -37,7 +36,7 @@ Complex work needs to be decomposed and delegated to agents. Without a consisten
 **So that** work can be delegated
 
 **Acceptance Criteria:**
-- [ ] Given task details, creation produces a unique task ID
+- [ ] Given task details (ID, title, description), creation produces a unique task ID
 - [ ] Given a task, metadata records owner and status
 
 ### Story US-002: Break Down Task [FEAT-004]
@@ -48,6 +47,7 @@ Complex work needs to be decomposed and delegated to agents. Without a consisten
 **Acceptance Criteria:**
 - [ ] Given a task, I can create sub-tasks linked to the parent
 - [ ] Given sub-tasks, they inherit relevant metadata from the parent
+- [ ] Given sub-tasks, dependencies are expressed as a DAG (explicit `depends_on` edges)
 
 ### Story US-003: Assign Task [FEAT-004]
 **As a** local operator
@@ -81,8 +81,7 @@ Complex work needs to be decomposed and delegated to agents. Without a consisten
 - Duplicate task identifiers
 
 ## Success Metrics
-- [NEEDS CLARIFICATION: Delegation success rate]
-- [NEEDS CLARIFICATION: Avg time to assign a task]
+None
 
 ## Constraints and Assumptions
 
@@ -105,9 +104,7 @@ Complex work needs to be decomposed and delegated to agents. Without a consisten
 - Automated agent selection policies (post-MVP)
 
 ## Open Questions
-1. [NEEDS CLARIFICATION: What is the minimal task descriptor format?]
-2. [NEEDS CLARIFICATION: How should dependencies between sub-tasks be expressed?]
-3. [NEEDS CLARIFICATION: Should tasks be versioned?]
+None
 
 ## Traceability
 

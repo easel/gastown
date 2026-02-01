@@ -3,7 +3,7 @@
 **Research Lead**: Yggdrasil Team
 **Time Budget**: 1 day
 **Created**: 2026-02-01
-**Status**: In Progress
+**Status**: Completed
 
 ## Research Objectives
 
@@ -55,9 +55,13 @@
 - **Deliverable**: Wrapper feasibility notes
 
 ## Success Criteria
-- [ ] A recommended control strategy per agent
-- [ ] Known failure modes documented
-- [ ] Subscription compatibility assessed
+- [x] A recommended control strategy per agent
+- [x] Known failure modes documented
+- [x] Subscription compatibility assessed
 
 ---
-**Next Steps**: Run PTY and wrapper experiments after CLI inventory.
+**Next Steps**: See findings and lock in attach-first control strategy.
+
+## Findings
+- Tmux control feasibility: `docs/helix/01-frame/research-plan/findings/tmux-spike-summary.md`
+- Control surface matrix: `docs/helix/01-frame/research-plan/findings/agent-control-surface-matrix.md`

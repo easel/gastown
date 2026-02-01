@@ -22,6 +22,7 @@ This registry tracks all features in Yggdrasil, their status, dependencies, and 
 | FEAT-007 | Observability & Reporting | Logs, summaries, and metrics for orchestration flows | Draft | P1 | Team | 2026-02-01 | 2026-02-01 |
 | FEAT-008 | Workspace & Worktree Management | Isolated workspaces and worktrees for tasks | Draft | P0 | Team | 2026-02-01 | 2026-02-01 |
 | FEAT-009 | Cross-Agent Communication | Agent-to-agent messaging and handoff signals | Draft | P0 | Team | 2026-02-01 | 2026-02-01 |
+| FEAT-010 | Centralized Mobile Access | Mobile-friendly access to session chat and status | Draft | P2 | Team | 2026-02-01 | 2026-02-01 |
 
 ## Feature Dependencies
 
@@ -54,6 +55,9 @@ This registry tracks all features in Yggdrasil, their status, dependencies, and 
 
 ### Observability
 - FEAT-007: Observability & Reporting
+
+### Interfaces (Future)
+- FEAT-010: Centralized Mobile Access
 
 ## ID Assignment Rules
 

@@ -84,8 +84,9 @@ A cohesive, test-driven CLI that unifies these domains can reduce operational fr
 
 ### Nice to Have (P2)
 1. Remote orchestration (multi-machine)
-2. UI or dashboard surfaces
-3. Advanced scheduling policies and workload optimization
+2. Centralized mobile access to session chat and status (mobile-friendly)
+3. UI or dashboard surfaces
+4. Advanced scheduling policies and workload optimization
 
 ## User Journey
 

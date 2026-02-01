@@ -19,8 +19,9 @@ When multiple agents collaborate on a task, they need a reliable way to pass con
 ### Functional Requirements
 - Send a message from one agent session to another
 - Support broadcast messages to all agents in a task scope
-- Provide message history per task/session
+- Provide global message history, with optional task/session filtering
 - Record message metadata (sender, recipient, timestamps)
+- Minimal message format is plain text with metadata
 - Support handoff signals to indicate task ownership changes
 - Allow operator to view or replay message streams
 
@@ -72,10 +73,10 @@ When multiple agents collaborate on a task, they need a reliable way to pass con
 - Sending to a non-existent session
 - Broadcasting with zero active sessions
 - Message history storage failure
+- Delivery failures return a CLI error and are recorded in message history with failure status
 
 ## Success Metrics
-- [NEEDS CLARIFICATION: Maximum acceptable message delivery latency]
-- [NEEDS CLARIFICATION: Max message backlog size]
+- Max message backlog size: 1000
 
 ## Constraints and Assumptions
 
@@ -97,9 +98,7 @@ When multiple agents collaborate on a task, they need a reliable way to pass con
 - External service integration
 
 ## Open Questions
-1. [NEEDS CLARIFICATION: What are the minimal message formats required?]
-2. [NEEDS CLARIFICATION: How are message delivery failures surfaced?]
-3. [NEEDS CLARIFICATION: Should message history be stored per task or globally?]
+None
 
 ## Traceability
 

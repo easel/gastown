@@ -3,7 +3,7 @@
 **Research Lead**: Yggdrasil Team
 **Time Budget**: 1-2 days
 **Created**: 2026-02-01
-**Status**: In Progress
+**Status**: Completed
 
 ## Research Objectives
 
@@ -74,10 +74,10 @@
 ## Success Criteria
 
 ### Research Completion Criteria
-- [ ] Control surface matrix completed for each agent
-- [ ] Session state observability documented per agent
-- [ ] Token usage exposure documented per agent
-- [ ] Subscription compatibility assessed per agent
+- [x] Control surface matrix completed for each agent
+- [x] Session state observability documented per agent
+- [x] Token usage exposure documented per agent
+- [x] Subscription compatibility assessed per agent
 
 ## Timeline and Milestones
 
@@ -102,4 +102,9 @@
 - **Technical Decisions**: Decide wrapper vs attach strategies
 
 ---
-**Next Steps**: Begin CLI inventory and control surface testing.
+**Next Steps**: See findings and incorporate into FEAT-006 decisions.
+
+## Findings
+- Control surface matrix: `docs/helix/01-frame/research-plan/findings/agent-control-surface-matrix.md`
+- CLI inventory: `docs/helix/01-frame/research-plan/findings/agent-cli-inventory.md`
+- TUI attach notes: `docs/helix/01-frame/research-plan/findings/tmux-spike-summary.md`

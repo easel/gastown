@@ -24,9 +24,9 @@ Orchestrated tasks need isolated working contexts to avoid cross-task contaminat
 - Reuse a workspace/worktree when explicitly requested
 - Clean up workspaces/worktrees on demand
 - Record workspace/worktree metadata for traceability
+- Workspace records must include a name and upstream repository reference
 
 ### Non-Functional Requirements
-- **Performance**: [NEEDS CLARIFICATION: Max acceptable workspace creation time]
 - **Security**: Workspaces are local to the user and not shared across accounts
 - **Reliability**: Workspace creation is atomic and recoverable on failure
 - **Usability**: CLI output clearly shows workspace/task mapping
@@ -94,14 +94,15 @@ Orchestrated tasks need isolated working contexts to avoid cross-task contaminat
 - Duplicate workspace identifiers
 
 ## Success Metrics
-- [NEEDS CLARIFICATION: Workspace creation success rate]
-- [NEEDS CLARIFICATION: Average workspace creation time]
+None
 
 ## Constraints and Assumptions
 
 ### Constraints
 - Local-only workspaces for MVP
 - No multi-machine workspace management
+- No default cleanup policies; cleanup is explicit only
+- Workspace reuse is allowed without time bounds until explicitly cleaned up
 
 ### Assumptions
 - Tasks reference a single primary workspace at a time
@@ -119,9 +120,7 @@ Orchestrated tasks need isolated working contexts to avoid cross-task contaminat
 - Automatic garbage collection without operator intent
 
 ## Open Questions
-1. [NEEDS CLARIFICATION: What metadata fields are mandatory for workspace records?]
-2. [NEEDS CLARIFICATION: What are the default cleanup policies?]
-3. [NEEDS CLARIFICATION: Should workspace reuse be time-bounded?]
+None
 
 ## Traceability
 

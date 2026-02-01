@@ -3,7 +3,7 @@
 **Research Lead**: Yggdrasil Team
 **Time Budget**: 1 day
 **Created**: 2026-02-01
-**Status**: In Progress
+**Status**: Completed
 
 ## Research Objectives
 
@@ -55,9 +55,16 @@
 - **Deliverable**: Token usage capture notes per agent
 
 ## Success Criteria
-- [ ] CPU/memory/IO tracking approach documented
-- [ ] Storage usage attribution approach documented
-- [ ] Token usage capture documented per agent
+- [x] CPU/memory/IO tracking approach documented
+- [x] Storage usage attribution approach documented
+- [x] Token usage capture documented per agent
+
+## Findings
+- Telemetry summary: `docs/helix/01-frame/research-plan/findings/session-telemetry-findings.md`
+- Metrics captures: `docs/helix/01-frame/research-plan/findings/metrics-claude.txt`
+- Metrics captures: `docs/helix/01-frame/research-plan/findings/metrics-codex.txt`
+- Metrics captures: `docs/helix/01-frame/research-plan/findings/metrics-gemini.txt`
+- Metrics captures: `docs/helix/01-frame/research-plan/findings/metrics-opencode.txt`
 - [ ] Minimal telemetry set defined for MVP
 
 ---

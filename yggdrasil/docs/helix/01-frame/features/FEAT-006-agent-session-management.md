@@ -27,9 +27,10 @@ Operators need to control multiple agent CLIs within a single orchestrator. Toda
 - Track token consumption per session (when available)
 - Recover or restart sessions after failure with explicit operator intent
 - Preserve subscription-based access where applicable (e.g., Claude Max, ChatGPT Pro) without requiring separate API keys for MVP
+- Prefer minimal, non-invasive control (tmux + CLI/stdin); avoid wrappers unless an agent requires it
 
 ### Non-Functional Requirements
-- **Performance**: [NEEDS CLARIFICATION: Startup and command latency targets]
+- **Performance**: No appreciable overhead added to upstream session management
 - **Security**: No secret leakage in session logs
 - **Scalability**: Support multiple concurrent local sessions
 - **Reliability**: Predictable session teardown and cleanup
@@ -56,11 +57,14 @@ Operators need to control multiple agent CLIs within a single orchestrator. Toda
 ### Session Identity
 - `session_id`
 - `agent_type`
+- `agent_version`
+- `yg_version`
+- `project_name`
 - `started_at`
 - `ended_at`
 - `state`
 
-### Resource Usage (sampled)
+### Resource Usage (sampled by collectors)
 - `cpu_percent`
 - `memory_rss_bytes`
 - `memory_vsz_bytes`
@@ -148,25 +152,27 @@ Operators need to control multiple agent CLIs within a single orchestrator. Toda
 - Usage data is unavailable or partial for a given agent
 
 ## Success Metrics
-- [NEEDS CLARIFICATION: Max acceptable session start time]
-- [NEEDS CLARIFICATION: Maximum acceptable session failure rate]
-- [NEEDS CLARIFICATION: Maximum concurrent sessions supported]
+- Session failure rate target: 0% (agent-caused failures tracked separately)
+- Maximum concurrent sessions: no explicit limit; constrained by system resources
 
 ## Constraints and Assumptions
 
 ### Constraints
 - Local-only sessions for MVP
-- CLI-first control surfaces
+- CLI-first control surfaces with tmux attach/detach
 - Must be compatible with subscription-based agent access flows
+- Minimize agent wrapping; wrapping is only allowed if required to control or observe a specific agent
 
 ### Assumptions
 - Agent CLIs are installed and available locally
 - Operators can provide required credentials for agent CLIs
+- Native agent session reuse is required to preserve subscription benefits for MVP
 
 ## Research/Spikes Required
 - For each supported agent, identify available control surfaces (CLI flags, stdin, TUI attach, APIs)
 - Determine how to monitor session state and usage metrics per agent
 - Evaluate whether a wrapper is required or if attach/control without wrapping is viable
+- Evaluate subscription/session reuse approaches (native session cache vs alternatives) to preserve paid benefits
 
 **Related Plans**:
 - `docs/helix/01-frame/research-plan/RP-001-agent-control-surfaces.md`
@@ -183,11 +189,7 @@ Operators need to control multiple agent CLIs within a single orchestrator. Toda
 - Agent-specific UI customization beyond attach/detach
 
 ## Open Questions
-1. [NEEDS CLARIFICATION: What telemetry fields are required per session beyond usage metrics?]
-2. [NEEDS CLARIFICATION: What control surfaces are available per agent (CLI, TUI, APIs)?]
-3. [NEEDS CLARIFICATION: Do we need to wrap agents or can we attach/control them without wrapping?]
-4. [NEEDS CLARIFICATION: How do we preserve subscription benefits (Claude Max, ChatGPT Pro, etc.)?]
-5. [NEEDS CLARIFICATION: What default sampling interval is acceptable for MVP?]
+None
 
 ## Traceability
 

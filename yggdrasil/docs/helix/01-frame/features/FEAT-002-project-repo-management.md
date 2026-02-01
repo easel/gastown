@@ -17,15 +17,16 @@ Operators need a consistent way to register, list, and prepare repositories for 
 ## Requirements
 
 ### Functional Requirements
-- Register a repository as a project with a unique identifier
+- Register a repository as a project with a unique human-friendly identifier (slug)
 - List registered projects and their repo metadata
 - Initialize a project workspace on demand
+- Registration should bare-clone repositories to bootstrap worktrees
 - Validate repository availability and remote configuration
 - Update or re-sync project metadata
 - Remove or archive project entries
+- Support a simple in-tree metadata format for Yggdrasil-specific project configuration (agent naming conventions, contribution policies, etc.)
 
 ### Non-Functional Requirements
-- **Performance**: [NEEDS CLARIFICATION: Max repo registration time]
 - **Security**: Do not leak credentials or sensitive repo data
 - **Reliability**: Repository metadata remains consistent across updates
 - **Usability**: Clear CLI output for project list and status
@@ -38,7 +39,7 @@ Operators need a consistent way to register, list, and prepare repositories for 
 **So that** it can be orchestrated
 
 **Acceptance Criteria:**
-- [ ] Given a repo path or URL, registration creates a unique project ID
+- [ ] Given a repo path or URL, registration creates a unique human-friendly project ID (slug)
 - [ ] Given a registered project, metadata includes repo path and remotes
 
 ### Story US-002: List Projects [FEAT-002]
@@ -64,7 +65,7 @@ Operators need a consistent way to register, list, and prepare repositories for 
 **So that** repo changes are reflected
 
 **Acceptance Criteria:**
-- [ ] Given a project, refresh updates remotes and metadata
+- [ ] Given a project, refresh updates remotes and in-tree metadata
 - [ ] Given a failure, errors are recorded clearly
 
 ### Story US-005: Remove Project [FEAT-002]
@@ -83,14 +84,13 @@ Operators need a consistent way to register, list, and prepare repositories for 
 - Remote config mismatch
 
 ## Success Metrics
-- [NEEDS CLARIFICATION: Project registration success rate]
-- [NEEDS CLARIFICATION: Average workspace init time]
+None
 
 ## Constraints and Assumptions
 
 ### Constraints
 - Local-only repo management for MVP
-- No automatic remote cloning without explicit operator intent
+- Registration can perform a bare clone by default to bootstrap worktrees
 
 ### Assumptions
 - Operators have local git access
@@ -105,9 +105,7 @@ Operators need a consistent way to register, list, and prepare repositories for 
 - Remote repo orchestration
 
 ## Open Questions
-1. [NEEDS CLARIFICATION: What is the canonical project identifier format?]
-2. [NEEDS CLARIFICATION: Should repo registration auto-clone by default?]
-3. [NEEDS CLARIFICATION: How are remotes stored and validated?]
+None
 
 ## Traceability
 

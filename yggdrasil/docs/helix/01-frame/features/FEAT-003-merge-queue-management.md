@@ -26,7 +26,6 @@ Without a merge queue, integration becomes manual and error-prone. Operators nee
 - Record queue history and outcomes
 
 ### Non-Functional Requirements
-- **Performance**: [NEEDS CLARIFICATION: Max queue operation latency]
 - **Security**: No credentials or sensitive content in queue logs
 - **Reliability**: Queue state is consistent and recoverable
 - **Usability**: Clear CLI output for queue state
@@ -39,8 +38,8 @@ Without a merge queue, integration becomes manual and error-prone. Operators nee
 **So that** integration work is scheduled
 
 **Acceptance Criteria:**
-- [ ] Given a change reference, adding creates a queue entry with unique ID
-- [ ] Given a queue entry, it is linked to a project and change metadata
+- [ ] Given a change reference (branch), adding creates a queue entry with unique ID
+- [ ] Given a queue entry, it stores the branch pointer and project association only
 
 ### Story US-002: List Queue [FEAT-003]
 **As a** local operator
@@ -93,8 +92,7 @@ Without a merge queue, integration becomes manual and error-prone. Operators nee
 - Processing when no entries are ready
 
 ## Success Metrics
-- [NEEDS CLARIFICATION: Queue processing success rate]
-- [NEEDS CLARIFICATION: Avg time from add to completion]
+None
 
 ## Constraints and Assumptions
 
@@ -115,9 +113,7 @@ Without a merge queue, integration becomes manual and error-prone. Operators nee
 - Automatic CI-driven queue processing
 
 ## Open Questions
-1. [NEEDS CLARIFICATION: What defines a "change" reference? PR, branch, commit?]
-2. [NEEDS CLARIFICATION: Should queue entries auto-expire?]
-3. [NEEDS CLARIFICATION: What metadata is required for each entry?]
+None
 
 ## Traceability
 

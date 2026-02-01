@@ -25,7 +25,6 @@ Without a shared task/state model, coordination across delegation, agent session
 - Synchronize task state updates with agent session outputs
 
 ### Non-Functional Requirements
-- **Performance**: [NEEDS CLARIFICATION: Task state read/write latency targets]
 - **Security**: Access limited to local user; no secret leakage in task logs
 - **Reliability**: Atomic state updates and recovery on crash
 
@@ -97,8 +96,7 @@ This provides traceability without embedding full artifact content in task state
 - Tasks with missing agent session context
 
 ## Success Metrics
-- [NEEDS CLARIFICATION: Task state consistency checks pass rate target]
-- [NEEDS CLARIFICATION: Query latency target for task status]
+- Task status query latency target: 100 ms
 
 ## Constraints and Assumptions
 

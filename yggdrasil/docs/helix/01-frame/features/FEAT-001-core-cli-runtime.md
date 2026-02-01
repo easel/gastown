@@ -18,16 +18,16 @@ Without a stable core CLI/runtime, all orchestration features become inconsisten
 
 ### Functional Requirements
 - Provide a single-binary CLI entrypoint (`yg`)
-- Load configuration from standard locations (with clear precedence)
+- Load YAML configuration from standard locations with clear precedence, cascading from `$HOME/.config/yggdrasil/config.yaml`
 - Route commands to domain modules (project/repo, merge queue, delegation, task/state, agents)
-- Provide consistent logging and error reporting
+- Provide OpenTelemetry logging with consistent error reporting
 - Support version reporting and diagnostics
 - Support dry-run or safe modes where applicable
 
 ### Non-Functional Requirements
-- **Performance**: CLI startup under [NEEDS CLARIFICATION: target ms]
+- **Performance**: CLI startup under 100 ms
 - **Security**: No secrets logged by default
-- **Usability**: Clear help output and command discovery
+- **Usability**: Clear help output and command discovery; default human-readable logs written to a suitable XDG location
 - **Reliability**: Deterministic command execution
 
 ## User Stories
@@ -47,7 +47,7 @@ Without a stable core CLI/runtime, all orchestration features become inconsisten
 **So that** I can control runtime behavior
 
 **Acceptance Criteria:**
-- [ ] Given config files, precedence is documented and enforced
+- [ ] Given config files, precedence is documented and enforced (CLI flags > env vars > project config > `$HOME/.config/yggdrasil/config.yaml` > defaults)
 - [ ] Given invalid config, errors are clear and actionable
 
 ### Story US-003: Route Commands [FEAT-001]
@@ -66,7 +66,8 @@ Without a stable core CLI/runtime, all orchestration features become inconsisten
 
 **Acceptance Criteria:**
 - [ ] Given `yg version`, I see version/build info
-- [ ] Given `yg doctor` or equivalent, I see environment checks
+- [ ] Given `yg doctor`, I see comprehensive checks for all external dependencies
+- [ ] Given `yg doctor`, every check has a test from day 1
 
 ## Edge Cases and Error Handling
 - Missing config files
@@ -75,8 +76,8 @@ Without a stable core CLI/runtime, all orchestration features become inconsisten
 - Missing dependencies (e.g., git)
 
 ## Success Metrics
-- [NEEDS CLARIFICATION: CLI startup time target]
-- [NEEDS CLARIFICATION: Error rate on command parsing]
+- CLI startup time target: 100 ms
+- Parsing error rate for valid commands: 0% (invalid input should return a clear error)
 
 ## Constraints and Assumptions
 
@@ -96,9 +97,7 @@ Without a stable core CLI/runtime, all orchestration features become inconsisten
 - Remote execution environment
 
 ## Open Questions
-1. [NEEDS CLARIFICATION: What is the config file format and location precedence?]
-2. [NEEDS CLARIFICATION: Should there be a global `yg doctor` command?]
-3. [NEEDS CLARIFICATION: What logging format is required?]
+None
 
 ## Traceability
 
