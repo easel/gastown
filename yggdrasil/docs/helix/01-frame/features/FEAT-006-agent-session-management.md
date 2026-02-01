@@ -8,7 +8,7 @@
 **Updated**: 2026-02-01
 
 ## Overview
-Manage local agent sessions for multiple CLI-based AI tools. Provide a consistent lifecycle model (start, attach, monitor, send commands, stop) with observable state, captured outputs, and resource limits.
+Manage local agent sessions for multiple CLI-based AI tools. Provide a consistent lifecycle model (start, attach, monitor, send commands, stop) with observable state, captured outputs, and usage tracking.
 
 ## Problem Statement
 
@@ -18,7 +18,7 @@ Operators need to control multiple agent CLIs within a single orchestrator. Toda
 
 ### Functional Requirements
 - Start agent sessions for supported CLI tools (Claude Code, Gemini CLI, Codex CLI, OpenCode CLI)
-- Monitor agent session state (running, idle, failed, exited)
+- Monitor agent session state using a consistent state model
 - Attach to and observe agent TUI or output stream
 - Send commands or input to a running session
 - Stop or terminate sessions cleanly
@@ -35,6 +35,53 @@ Operators need to control multiple agent CLIs within a single orchestrator. Toda
 - **Reliability**: Predictable session teardown and cleanup
 - **Usability**: Consistent CLI behavior across agent types
 
+## Session State Model (MVP)
+
+### Core States
+- **starting**: Session process launched, pre-flight steps in progress
+- **running**: Agent is active and can receive input
+- **waiting_input**: Agent is awaiting user/operator input
+- **stopping**: Session is shutting down
+- **stopped**: Session terminated normally
+- **failed**: Session terminated with error or abnormal exit
+- **unknown**: State cannot be determined reliably
+
+### Optional States (Post-MVP)
+- **paused**
+- **detached**
+- **resuming**
+
+## Telemetry Schema (MVP)
+
+### Session Identity
+- `session_id`
+- `agent_type`
+- `started_at`
+- `ended_at`
+- `state`
+
+### Resource Usage (sampled)
+- `cpu_percent`
+- `memory_rss_bytes`
+- `memory_vsz_bytes`
+- `io_read_bytes`
+- `io_write_bytes`
+- `io_read_chars`
+- `io_write_chars`
+- `workspace_bytes_used`
+
+### Token Usage (when available)
+- `tokens_input`
+- `tokens_output`
+- `tokens_cache_read`
+- `tokens_cache_write`
+- `cost_usd`
+
+### IO and Attachment
+- `attached`
+- `last_input_at`
+- `last_output_at`
+
 ## User Stories
 
 ### Story US-001: Start Agent Session [FEAT-006]
@@ -44,7 +91,7 @@ Operators need to control multiple agent CLIs within a single orchestrator. Toda
 
 **Acceptance Criteria:**
 - [ ] Given a supported agent type, when I start a session, then a unique session ID is returned
-- [ ] Given a start request, when the agent launches, then session state becomes "running"
+- [ ] Given a start request, when the agent launches, then session state becomes "starting" then "running"
 - [ ] Given an unsupported agent type, then the CLI returns a clear error
 
 ### Story US-002: Observe Agent Output [FEAT-006]
@@ -71,7 +118,7 @@ Operators need to control multiple agent CLIs within a single orchestrator. Toda
 **So that** resources are reclaimed and state is consistent
 
 **Acceptance Criteria:**
-- [ ] Given a running session, when I stop it, then the session transitions to "stopped" or "exited"
+- [ ] Given a running session, when I stop it, then the session transitions to "stopping" then "stopped"
 - [ ] Given a stopped session, then logs and outputs remain accessible
 
 ### Story US-005: Track Resource and Token Usage [FEAT-006]
@@ -83,6 +130,16 @@ Operators need to control multiple agent CLIs within a single orchestrator. Toda
 - [ ] Given a running session, resource usage (CPU, memory, storage, IO) is recorded
 - [ ] Given a running session, token usage is recorded when the agent provides it
 - [ ] Usage data is accessible via CLI and persisted with session logs
+
+### Story US-006: Track Session State [FEAT-006]
+**As a** local operator
+**I want** to see clear session state transitions
+**So that** I can understand lifecycle progress and failures
+
+**Acceptance Criteria:**
+- [ ] Given a running session, I can query its current state
+- [ ] Given a session exit, state transitions to "stopped" or "failed" appropriately
+- [ ] Given missing state signals, the state is "unknown"
 
 ## Edge Cases and Error Handling
 - Attempting to start two sessions with the same identifier
@@ -100,7 +157,7 @@ Operators need to control multiple agent CLIs within a single orchestrator. Toda
 ### Constraints
 - Local-only sessions for MVP
 - CLI-first control surfaces
- - Must be compatible with subscription-based agent access flows
+- Must be compatible with subscription-based agent access flows
 
 ### Assumptions
 - Agent CLIs are installed and available locally
@@ -126,11 +183,11 @@ Operators need to control multiple agent CLIs within a single orchestrator. Toda
 - Agent-specific UI customization beyond attach/detach
 
 ## Open Questions
-1. [NEEDS CLARIFICATION: What session states are required beyond running/idle/failed/exited?]
-2. [NEEDS CLARIFICATION: What telemetry fields are required per session beyond usage metrics?]
-3. [NEEDS CLARIFICATION: What control surfaces are available per agent (CLI, TUI, APIs)?]
-4. [NEEDS CLARIFICATION: Do we need to wrap agents or can we attach/control them without wrapping?]
-5. [NEEDS CLARIFICATION: How do we preserve subscription benefits (Claude Max, ChatGPT Pro, etc.)?]
+1. [NEEDS CLARIFICATION: What telemetry fields are required per session beyond usage metrics?]
+2. [NEEDS CLARIFICATION: What control surfaces are available per agent (CLI, TUI, APIs)?]
+3. [NEEDS CLARIFICATION: Do we need to wrap agents or can we attach/control them without wrapping?]
+4. [NEEDS CLARIFICATION: How do we preserve subscription benefits (Claude Max, ChatGPT Pro, etc.)?]
+5. [NEEDS CLARIFICATION: What default sampling interval is acceptable for MVP?]
 
 ## Traceability
 

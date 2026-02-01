@@ -20,7 +20,7 @@
 
 **Acceptance Criteria:**
 - [ ] Given a supported agent type, when I start a session, then a unique session ID is returned
-- [ ] Given a start request, when the agent launches, then session state becomes "running"
+- [ ] Given a start request, when the agent launches, then session state becomes "starting" then "running"
 - [ ] Given an unsupported agent type, then the CLI returns a clear error
 
 **Definition of Done:**
@@ -77,7 +77,7 @@
 **So that** resources are reclaimed and state is consistent
 
 **Acceptance Criteria:**
-- [ ] Given a running session, when I stop it, then the session transitions to "stopped" or "exited"
+- [ ] Given a running session, when I stop it, then the session transitions to "stopping" then "stopped"
 - [ ] Given a stopped session, then logs and outputs remain accessible
 
 **Definition of Done:**
@@ -108,6 +108,26 @@
 
 ---
 
+### Story US-006: Track Session State [FEAT-006]
+**Priority**: P0
+
+**As a** local operator
+**I want** to see clear session state transitions
+**So that** I can understand lifecycle progress and failures
+
+**Acceptance Criteria:**
+- [ ] Given a running session, I can query its current state
+- [ ] Given a session exit, state transitions to "stopped" or "failed" appropriately
+- [ ] Given missing state signals, the state is "unknown"
+
+**Definition of Done:**
+- [ ] Feature implemented and code reviewed
+- [ ] Tests written and passing
+- [ ] Documentation updated
+- [ ] Acceptance criteria verified
+
+---
+
 ## User Personas
 
 ### Persona 1: Orchestration Engineer
@@ -124,6 +144,7 @@
 - [ ] US-003: Send Commands to Session [FEAT-006]
 - [ ] US-004: Stop or Terminate Session [FEAT-006]
 - [ ] US-005: Track Resource and Token Usage [FEAT-006]
+- [ ] US-006: Track Session State [FEAT-006]
 
 ---
 *Note: Stories are focused on the local session lifecycle and core control surfaces.*
