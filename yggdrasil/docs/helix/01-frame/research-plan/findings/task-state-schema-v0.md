@@ -21,6 +21,7 @@
 - `feature_id` (FEAT-XXX)
 - `story_id` (US-XXX, optional)
 - `helix_phase` (frame/design/test/build/deploy/iterate, optional)
+- `artifact_refs` (optional list of doc paths)
 - `created_at`
 - `updated_at`
 - `started_at` (optional)
@@ -68,6 +69,12 @@
 - `blocked -> in_progress`
 - Any -> `canceled` (explicit operator intent)
 
+## HELIX Artifact Mapping
+- **Feature** -> `feature_id` (FEAT-XXX)
+- **User Story** -> `story_id` (US-XXX, optional)
+- **Phase** -> `helix_phase` (frame/design/test/build/deploy/iterate, optional)
+- **Artifact References** -> `artifact_refs` (doc paths for PRD sections, specs, or checklists)
+
 ## Links
 - `task_id -> session_id`
 - `task_id -> workspace_id`
@@ -76,5 +83,4 @@
 
 ## Open Questions
 - Do we need a separate status for handoff vs waiting?
-- How tightly should tasks map to HELIX phases?
 - Should TaskEvent be mandatory in MVP or optional?

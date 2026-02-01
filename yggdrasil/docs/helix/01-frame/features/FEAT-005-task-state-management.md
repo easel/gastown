@@ -32,6 +32,16 @@ Without a shared task/state model, coordination across delegation, agent session
 
 See `docs/helix/01-frame/research-plan/findings/task-state-schema-v0.md` (v1 draft) for the current proposed fields, transitions, and links.
 
+## HELIX Artifact Mapping (Resolved)
+
+Tasks map to HELIX artifacts and phases using explicit references and lightweight fields:
+- **Feature** -> `feature_id` (FEAT-XXX)
+- **User Story** -> `story_id` (US-XXX, optional)
+- **HELIX Phase** -> `helix_phase` (frame/design/test/build/deploy/iterate, optional)
+- **Artifacts** -> `artifact_refs` (optional list of doc paths, e.g., PRD section or spec)
+
+This provides traceability without embedding full artifact content in task state.
+
 ## Edge Cases and Error Handling
 - Partial task updates and conflicting state transitions
 - Corrupted or missing task state data
@@ -64,7 +74,6 @@ See `docs/helix/01-frame/research-plan/findings/task-state-schema-v0.md` (v1 dra
 ## Open Questions
 1. [NEEDS CLARIFICATION: What is the minimal task state schema required for MVP?]
 2. [NEEDS CLARIFICATION: How are task state updates synchronized with agent outputs?]
-3. [NEEDS CLARIFICATION: What is the canonical mapping from HELIX artifacts to task state?]
 
 ## Traceability
 

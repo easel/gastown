@@ -41,7 +41,6 @@
 - [NEEDS CLARIFICATION: Time to query task status]
 - [NEEDS CLARIFICATION: What is the minimal task state schema required for MVP?]
 - [NEEDS CLARIFICATION: How are task state updates synchronized with agent outputs?]
-- [NEEDS CLARIFICATION: What is the canonical mapping from HELIX artifacts to task state?]
 
 ## features/FEAT-006-agent-session-management.md
 - **Performance**: [NEEDS CLARIFICATION: Startup and command latency targets]
