@@ -22,6 +22,7 @@ Without a shared task/state model, coordination across delegation, agent session
 - Provide queryable task status for CLI operations
 - Support linking tasks to workspaces, agents, and repositories
 - Support task dependencies and ownership changes
+- Synchronize task state updates with agent session outputs
 
 ### Non-Functional Requirements
 - **Performance**: [NEEDS CLARIFICATION: Task state read/write latency targets]
@@ -31,6 +32,40 @@ Without a shared task/state model, coordination across delegation, agent session
 ## Schema Reference
 
 See `docs/helix/01-frame/research-plan/findings/task-state-schema-v0.md` (v1 draft) for the current proposed fields, transitions, and links.
+
+## Minimal Task Schema (MVP)
+
+**Required fields**:
+- `task_id`
+- `title`
+- `status`
+- `owner_session_id`
+- `workspace_id`
+- `feature_id`
+- `created_at`
+- `updated_at`
+
+**Optional fields** (MVP):
+- `description`
+- `priority`
+- `story_id`
+- `helix_phase`
+- `artifact_refs`
+- `started_at`
+- `completed_at`
+- `tags`
+- `notes`
+
+## Task State Sync with Agent Outputs (MVP)
+
+- **Source of truth**: Task state is authoritative; agent outputs append evidence.
+- **Sync triggers**:
+  - Session start -> set `status` to `in_progress` if assigned.
+  - Session exit -> set `status` to `completed` or `failed` based on exit status.
+  - Operator override -> allow explicit state change with audit event.
+- **Evidence model**:
+  - Append agent output metadata to TaskEvent logs (timestamp, session_id, outcome).
+  - Do not overwrite task fields without explicit state transitions.
 
 ## HELIX Artifact Mapping (Resolved)
 
@@ -72,8 +107,8 @@ This provides traceability without embedding full artifact content in task state
 - Centralized or hosted task state services
 
 ## Open Questions
-1. [NEEDS CLARIFICATION: What is the minimal task state schema required for MVP?]
-2. [NEEDS CLARIFICATION: How are task state updates synchronized with agent outputs?]
+1. [NEEDS CLARIFICATION: What are the task state consistency checks required for MVP?]
+2. [NEEDS CLARIFICATION: Should task state updates be event-sourced only or allow direct mutation?]
 
 ## Traceability
 

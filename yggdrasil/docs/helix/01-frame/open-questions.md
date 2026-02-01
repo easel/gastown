@@ -39,8 +39,8 @@
 - **Performance**: [NEEDS CLARIFICATION: Task state read/write latency targets]
 - [NEEDS CLARIFICATION: Task state consistency checks pass rate]
 - [NEEDS CLARIFICATION: Time to query task status]
-- [NEEDS CLARIFICATION: What is the minimal task state schema required for MVP?]
-- [NEEDS CLARIFICATION: How are task state updates synchronized with agent outputs?]
+- [NEEDS CLARIFICATION: What are the task state consistency checks required for MVP?]
+- [NEEDS CLARIFICATION: Should task state updates be event-sourced only or allow direct mutation?]
 
 ## features/FEAT-006-agent-session-management.md
 - **Performance**: [NEEDS CLARIFICATION: Startup and command latency targets]

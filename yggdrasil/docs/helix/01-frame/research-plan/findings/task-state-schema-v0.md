@@ -13,9 +13,9 @@
 ### Task
 - `task_id`
 - `title`
-- `description`
+- `description` (optional)
 - `status`
-- `priority` (P0/P1/P2)
+- `priority` (optional; P0/P1/P2)
 - `owner_session_id`
 - `workspace_id`
 - `feature_id` (FEAT-XXX)
@@ -43,7 +43,7 @@
 - `depends_on_task_id`
 - `dependency_type` (required/blocks/related)
 
-### TaskEvent (optional for MVP, recommended)
+### TaskEvent (recommended)
 - `event_id`
 - `task_id`
 - `timestamp`
@@ -68,6 +68,14 @@
 - `in_progress -> completed | failed | blocked`
 - `blocked -> in_progress`
 - Any -> `canceled` (explicit operator intent)
+
+## Task State Sync (MVP)
+- **Source of truth**: task record + TaskEvent history
+- **Session start**: set `status=in_progress` when assigned session begins
+- **Session exit**:
+  - exit success -> `status=completed`
+  - exit error -> `status=failed`
+- **Operator override**: allowed with TaskEvent audit
 
 ## HELIX Artifact Mapping
 - **Feature** -> `feature_id` (FEAT-XXX)
