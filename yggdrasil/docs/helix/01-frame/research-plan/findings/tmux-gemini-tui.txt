@@ -1,18 +1,18 @@
-gemini
+gemini --screen-reader
 erik in  eitri in odin on  main [?]                                kind-kind
- gemini
+ gemini --screen-reader
+(node:2938646) [DEP0040] DeprecationWarning: The `punycode` module is deprecated
+. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:2939382) [DEP0040] DeprecationWarning: The `punycode` module is deprecated
+. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+You are currently in screen reader-friendly view. To switch out, open
+/home/erik/.gemini/settings.json and remove the entry for "screenReader". This
+will disappear on next run.
+~/.../crew/odin (main*) no sandbox Auto (Gemini 2.5) /model
 
-
-
-
-
-
-
-
-
-
-
-
+>    Type your message or @path/to/file
 
 
 

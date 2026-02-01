@@ -18,11 +18,13 @@
 
 ## TUI Observations
 - **Claude Code**: Trust prompt displayed on launch.
-- **Gemini/Codex/OpenCode**: No output captured within 2s; likely alt-screen usage or longer startup.
+- **Gemini CLI**: `--screen-reader` surfaces a text UI prompt and status line.
+- **Codex CLI**: Trust/approval prompt displayed on launch with `--no-alt-screen`.
+- **OpenCode CLI**: TUI rendered within 8s and captured in tmux.
 
 ## Limitations
-- TUI capture may require longer wait or explicit non-alt-screen mode.
 - Input injection behavior not verified beyond basic `tmux send-keys`.
+- Gemini output required `--screen-reader` to render in text capture.
 
 ## Next Steps
 - Re-run interactive sessions with longer capture windows.

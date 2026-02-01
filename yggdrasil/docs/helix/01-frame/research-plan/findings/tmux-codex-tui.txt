@@ -1,12 +1,12 @@
-codex --no-alt-screen
-erik in  eitri in odin on  main [?]                                kind-kind
- codex --no-alt-screen
+> You are running Codex in /home/erik/gt/yggdrasil/crew/odin
 
+  Since this folder is version controlled, you may wish to allow Codex to work
+  in this folder without asking for approval.
 
+ 1. Yes, allow Codex to work in this folder without asking for approval
+  2. No, ask me to approve edits and commands
 
-
-
-
+  Press enter to continue
 
 
 
