@@ -1,0 +1,14 @@
+command: gemini
+pane_pid: 2193601
+child_pid: 2194122
+ps:
+    PID    PPID CMD                         %CPU %MEM   RSS    VSZ
+2194122 2193601 /home/linuxbrew/.linuxbrew/  137  0.1 218656 1302948
+proc_io:
+rchar: 25730733
+wchar: 18
+syscr: 7668
+syscw: 4
+read_bytes: 42061824
+write_bytes: 0
+cancelled_write_bytes: 0

@@ -1,0 +1,14 @@
+command: claude
+pane_pid: 2192462
+child_pid: 2193295
+ps:
+    PID    PPID CMD                         %CPU %MEM   RSS    VSZ
+2193295 2192462 claude                       102  0.2 412856 74078440
+proc_io:
+rchar: 118793772
+wchar: 174943
+syscr: 478
+syscw: 52
+read_bytes: 4337664
+write_bytes: 143360
+cancelled_write_bytes: 0

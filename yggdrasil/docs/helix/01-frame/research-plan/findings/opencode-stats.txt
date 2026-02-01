@@ -1,0 +1,38 @@
+
+                       OVERVIEW                         
+
+Sessions                                              4 
+Messages                                             49 
+Days                                                  2 
+
+
+
+                    COST & TOKENS                       
+
+Total Cost                                        $0.00 
+Avg Cost/Day                                      $0.00 
+Avg Tokens/Session                                73.9K 
+Median Tokens/Session                             73.3K 
+Input                                            205.3K 
+Output                                            81.0K 
+Cache Read                                       854.8K 
+Cache Write                                           0 
+
+
+
+
+                      TOOL USAGE                        
+
+ bash                124 (42.6%)    
+ write                     93 (32.0%)    
+ read                               40 (13.7%)    
+ todowrite                              13 ( 4.5%)    
+ glob                                     9 ( 3.1%)    
+ grep                                     4 ( 1.4%)    
+ edit                                     3 ( 1.0%)    
+ task                                     2 ( 0.7%)    
+ codesearch                               1 ( 0.3%)    
+ websearch                                1 ( 0.3%)    
+ webfetch                                 1 ( 0.3%)    
+
+

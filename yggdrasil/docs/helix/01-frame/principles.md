@@ -30,7 +30,7 @@
    - End-to-end tests must exercise the full system early.
 
 7. **HELIX Methodology Compliance**
-   - Work follows Frame → Design → Test → Build → Deploy → Iterate.
+   - Work follows Frame -> Design -> Test -> Build -> Deploy -> Iterate.
    - No implementation begins before tests are written and failing.
 
 8. **Domain-First Naming**

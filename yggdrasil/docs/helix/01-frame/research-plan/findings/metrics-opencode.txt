@@ -1,0 +1,14 @@
+command: opencode
+pane_pid: 2195922
+child_pid: 2196652
+ps:
+    PID    PPID CMD                         %CPU %MEM   RSS    VSZ
+2196652 2195922 opencode                     108  0.1 289848 73698336
+proc_io:
+rchar: 41308487
+wchar: 4287495
+syscr: 252
+syscw: 29
+read_bytes: 114094080
+write_bytes: 53248
+cancelled_write_bytes: 0

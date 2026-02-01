@@ -1,0 +1,14 @@
+command: codex --no-alt-screen
+pane_pid: 2194691
+child_pid: 2195553
+ps:
+    PID    PPID CMD                         %CPU %MEM   RSS    VSZ
+2195553 2194691 codex --no-alt-screen        6.0  0.0 25264 111372
+proc_io:
+rchar: 820929
+wchar: 293
+syscr: 965
+syscw: 37
+read_bytes: 2576384
+write_bytes: 32768
+cancelled_write_bytes: 0

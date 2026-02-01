@@ -11,11 +11,19 @@
   - `docs/helix/01-frame/research-plan/findings/tmux-gemini-help.txt`
   - `docs/helix/01-frame/research-plan/findings/tmux-codex-help.txt`
   - `docs/helix/01-frame/research-plan/findings/tmux-opencode-help.txt`
+  - `docs/helix/01-frame/research-plan/findings/tmux-claude-tui.txt`
+  - `docs/helix/01-frame/research-plan/findings/tmux-gemini-tui.txt`
+  - `docs/helix/01-frame/research-plan/findings/tmux-codex-tui.txt`
+  - `docs/helix/01-frame/research-plan/findings/tmux-opencode-tui.txt`
+
+## TUI Observations
+- **Claude Code**: Trust prompt displayed on launch.
+- **Gemini/Codex/OpenCode**: No output captured within 2s; likely alt-screen usage or longer startup.
 
 ## Limitations
-- Only `--help` commands were executed to avoid consuming tokens or triggering logins.
-- Interactive TUI behavior and session attach/detach are not yet validated.
+- TUI capture may require longer wait or explicit non-alt-screen mode.
+- Input injection behavior not verified beyond basic `tmux send-keys`.
 
 ## Next Steps
-- Run interactive sessions in tmux for each agent to confirm TUI attach/detach behavior.
-- Observe whether login flows or subscriptions are required for interactive sessions.
+- Re-run interactive sessions with longer capture windows.
+- Explore alt-screen flags or environment settings per agent.
