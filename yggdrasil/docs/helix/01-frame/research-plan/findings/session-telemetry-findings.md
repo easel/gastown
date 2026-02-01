@@ -40,8 +40,8 @@
 - Sample: `docs/helix/01-frame/research-plan/findings/opencode-stats.txt`
 
 ### Gemini CLI
-- `gemini --prompt "ping" --output-format json` failed due to model quota.
-- Error log: `docs/helix/01-frame/research-plan/findings/gemini-print.err`
+- `gemini --prompt "ping" --output-format json` returns token usage per model.
+- Sample: `docs/helix/01-frame/research-plan/findings/gemini-print.json`
 
 ## Preliminary Recommendation
 - For MVP, track CPU/memory/IO via process metrics.

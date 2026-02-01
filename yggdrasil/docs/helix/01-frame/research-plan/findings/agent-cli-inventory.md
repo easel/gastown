@@ -45,4 +45,4 @@
 - `docs/helix/01-frame/research-plan/findings/claude-print.json`
 - `docs/helix/01-frame/research-plan/findings/codex-exec.jsonl`
 - `docs/helix/01-frame/research-plan/findings/opencode-stats.txt`
-- `docs/helix/01-frame/research-plan/findings/gemini-print.err`
+- `docs/helix/01-frame/research-plan/findings/gemini-print.json`
