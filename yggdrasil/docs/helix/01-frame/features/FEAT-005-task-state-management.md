@@ -58,14 +58,28 @@ See `docs/helix/01-frame/research-plan/findings/task-state-schema-v0.md` (v1 dra
 
 ## Task State Sync with Agent Outputs (MVP)
 
-- **Source of truth**: Task state is authoritative; agent outputs append evidence.
+- **Source of truth**: Task record + TaskEvent history
 - **Sync triggers**:
-  - Session start -> set `status` to `in_progress` if assigned.
-  - Session exit -> set `status` to `completed` or `failed` based on exit status.
-  - Operator override -> allow explicit state change with audit event.
+  - Session start -> set `status` to `in_progress` if assigned
+  - Session exit -> set `status` to `completed` or `failed` based on exit status
+  - Operator override -> allow explicit state change with audit event
 - **Evidence model**:
-  - Append agent output metadata to TaskEvent logs (timestamp, session_id, outcome).
-  - Do not overwrite task fields without explicit state transitions.
+  - Append agent output metadata to TaskEvent logs (timestamp, session_id, outcome)
+  - Do not overwrite task fields without explicit state transitions
+
+## Task State Consistency Checks (MVP)
+
+- **Required fields present**: all required task fields populated
+- **Valid transitions**: status changes must follow the allowed transition graph
+- **Referential integrity**: referenced `session_id`, `workspace_id`, and `feature_id` exist
+- **Timestamps monotonic**: `created_at <= updated_at <= completed_at` (when present)
+- **Event audit**: any state change must produce a TaskEvent entry
+
+## Event-Sourcing Stance (MVP)
+
+- **Hybrid approach**: Task is a materialized view; TaskEvent is append-only audit log.
+- **State changes**: MUST be recorded via TaskEvent and then reflected in Task.
+- **Metadata updates**: MAY be direct mutation (notes/tags) but still emit TaskEvent.
 
 ## HELIX Artifact Mapping (Resolved)
 
@@ -83,8 +97,8 @@ This provides traceability without embedding full artifact content in task state
 - Tasks with missing agent session context
 
 ## Success Metrics
-- [NEEDS CLARIFICATION: Task state consistency checks pass rate]
-- [NEEDS CLARIFICATION: Time to query task status]
+- [NEEDS CLARIFICATION: Task state consistency checks pass rate target]
+- [NEEDS CLARIFICATION: Query latency target for task status]
 
 ## Constraints and Assumptions
 
@@ -105,10 +119,6 @@ This provides traceability without embedding full artifact content in task state
 ## Out of Scope
 - Distributed task state across multiple machines
 - Centralized or hosted task state services
-
-## Open Questions
-1. [NEEDS CLARIFICATION: What are the task state consistency checks required for MVP?]
-2. [NEEDS CLARIFICATION: Should task state updates be event-sourced only or allow direct mutation?]
 
 ## Traceability
 

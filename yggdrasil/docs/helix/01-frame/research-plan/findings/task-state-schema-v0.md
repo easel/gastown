@@ -77,6 +77,17 @@
   - exit error -> `status=failed`
 - **Operator override**: allowed with TaskEvent audit
 
+## Consistency Checks (MVP)
+- Required fields present
+- Status transitions valid
+- References exist (`session_id`, `workspace_id`, `feature_id`)
+- Timestamps monotonic
+- TaskEvent recorded for state changes
+
+## Event-Sourcing Stance (MVP)
+- Hybrid: Task is materialized view; TaskEvent is append-only audit log
+- State changes require TaskEvent; metadata updates allowed but audited
+
 ## HELIX Artifact Mapping
 - **Feature** -> `feature_id` (FEAT-XXX)
 - **User Story** -> `story_id` (US-XXX, optional)

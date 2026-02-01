@@ -37,10 +37,8 @@
 
 ## features/FEAT-005-task-state-management.md
 - **Performance**: [NEEDS CLARIFICATION: Task state read/write latency targets]
-- [NEEDS CLARIFICATION: Task state consistency checks pass rate]
-- [NEEDS CLARIFICATION: Time to query task status]
-- [NEEDS CLARIFICATION: What are the task state consistency checks required for MVP?]
-- [NEEDS CLARIFICATION: Should task state updates be event-sourced only or allow direct mutation?]
+- [NEEDS CLARIFICATION: Task state consistency checks pass rate target]
+- [NEEDS CLARIFICATION: Query latency target for task status]
 
 ## features/FEAT-006-agent-session-management.md
 - **Performance**: [NEEDS CLARIFICATION: Startup and command latency targets]
